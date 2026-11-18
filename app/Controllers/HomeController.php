@@ -27,7 +27,7 @@ final class HomeController
         $icon = static fn (string $name, string $class = ''): string => Icon::render($name, $class);
         $asset = static fn (string $path): string => Assets::url($path);
         $logo = Assets::image('logo');
-        $hero = Assets::image('hero-phone');
+        $hero = Assets::image('hero-discover');
         $catalogUrl = static function (array $changes = []) use ($view, $category, $search, $sort): string {
             $params = array_replace(['view'=>$view,'category'=>$category,'q'=>$search,'sort'=>$sort], $changes);
             return '/?' . http_build_query(array_filter($params, static fn ($value): bool => $value !== '' && $value !== null)) . '#explore';

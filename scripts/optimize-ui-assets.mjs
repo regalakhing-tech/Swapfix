@@ -13,6 +13,7 @@ await mkdir(path.join(root, 'resources/data'), { recursive: true });
 const manifest = {};
 const sources = [
   {name:'hero-phone', file:'originals/swapfix-gadgets-hero.png', widths:[560,1040], ratio:[1,1]},
+  {name:'hero-discover', file:'originals/swapfix-discover-hero.png', widths:[480,800,1200], ratio:[4,3], transparent:true},
   {name:'phone-blue', file:'originals/blue-iphone-pro-back.webp', widths:[400,640], ratio:[4,3]},
   {name:'phone-graphite', file:'originals/silver-iphone-pro-back.webp', widths:[400,640], ratio:[4,3]},
   {name:'tablet', file:'originals/space-gray-ipad-pro-back.webp', widths:[400,640], ratio:[4,3]},
@@ -24,7 +25,10 @@ for (const source of sources) {
   const variants = {};
   for (const width of source.widths) {
     const height = Math.round(width * source.ratio[1] / source.ratio[0]);
-    const optimized = await sharp(bytes).rotate().resize(width,height,{fit:'cover',position:'centre'}).webp({quality:78,effort:6}).toBuffer();
+    const resized = sharp(bytes).rotate().resize(width,height,source.transparent
+      ? {fit:'contain', background:{r:0,g:0,b:0,alpha:0}}
+      : {fit:'cover',position:'centre'});
+    const optimized = await resized.webp({quality:78,effort:6}).toBuffer();
     const hash = createHash('sha256').update(optimized).digest('hex').slice(0,10);
     const name = `${source.name}-${width}.${hash}.webp`;
     await writeFile(path.join(output,name),optimized);

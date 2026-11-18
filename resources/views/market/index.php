@@ -2,8 +2,18 @@
 use SwapFix\Support\Labels;
 
 $total = (int) $results['total'];
-echo $ui->heading('bag', 'Buy & Sell', $total . ' ' . ($total === 1 ? 'listing' : 'listings'), $ui->link('/market/new', 'New listing', 'plus'));
+$ui->title = 'Buy & Sell';
 ?>
+<section class="browse-page discover-buy-sell" aria-labelledby="market-title">
+    <header class="browse-intro market-intro">
+        <div>
+            <p class="browse-section-name"><?= $ui->icon('bag') ?>Buy &amp; Sell</p>
+            <h1 id="market-title">Find a gadget worth keeping.</h1>
+            <p>Browse secondhand devices and check the price, condition, and location before you message the seller.</p>
+        </div>
+        <?= $ui->link('/market/new', 'List a gadget', 'plus') ?>
+    </header>
+<?php require __DIR__ . '/../partials/filter-chips.php' ?>
 <form class="filter-bar card" method="get" action="/market" role="search">
     <label class="search-field filter-search"><?= $ui->icon('search') ?><span class="sr-only">Search listings</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" maxlength="100" placeholder="Name, brand or model"></label>
     <input type="hidden" name="category" value="<?= $e($filters['category']) ?>">
@@ -20,7 +30,7 @@ echo $ui->heading('bag', 'Buy & Sell', $total . ' ' . ($total === 1 ? 'listing' 
     <label class="sort-field"><span class="sr-only">Sort</span><select name="sort"><?php foreach (['newest' => 'Newest', 'price_asc' => 'Price: low to high', 'price_desc' => 'Price: high to low'] as $value => $label): ?><option value="<?= $e($value) ?>" <?= $filters['sort'] === $value ? 'selected' : '' ?>><?= $e($label) ?></option><?php endforeach ?></select></label>
     <button class="button button-primary" type="submit"><?= $ui->icon('search') ?>Search</button>
 </form>
-<?php require __DIR__ . '/../partials/filter-chips.php' ?>
+<p class="browse-count"><?= $total ?> <?= $total === 1 ? 'listing' : 'listings' ?></p>
 <?php if ($results['items'] === []): ?>
     <?= $ui->emptyState('bag', 'No listings match yet.', $ui->link('/market', 'Clear filters', 'close', 'button button-outline')) ?>
 <?php else: ?>
@@ -46,3 +56,4 @@ echo $ui->heading('bag', 'Buy & Sell', $total . ' ' . ($total === 1 ? 'listing' 
     </div>
     <?= $ui->pagination($total, $pageNumber, $pageSize) ?>
 <?php endif ?>
+</section>

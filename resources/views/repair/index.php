@@ -1,8 +1,26 @@
 <?php
 $total = (int) $results['total'];
 $session = $ui->session;
-echo $ui->heading('wrench', 'Find a technician', $total . ' ' . ($total === 1 ? 'technician' : 'technicians'), $session ? $ui->link('/repairs', 'My repairs', 'clipboard', 'button button-outline') : '');
+$ui->title = 'Repair';
+$specialties = ['Screen replacement' => 'phone', 'Battery replacement' => 'battery', 'Charging port repair' => 'plug', 'Software troubleshooting' => 'settings'];
 ?>
+<section class="browse-page discover-repair" aria-labelledby="repair-directory-title">
+    <header class="browse-intro repair-intro">
+        <div>
+            <p class="browse-section-name"><?= $ui->icon('wrench') ?>Repair</p>
+            <h1 id="repair-directory-title">Find a technician.</h1>
+            <p>Choose a specialty or search by area. Review the technician’s quote before work starts.</p>
+        </div>
+        <?= $session ? $ui->link('/repairs', 'My repairs', 'clipboard', 'button button-outline') : $ui->link('/login?next=%2Frepairs', 'Track a repair', 'clipboard', 'button button-outline') ?>
+    </header>
+    <nav class="repair-specialties" aria-label="Popular repair specialties">
+        <?php foreach ($specialties as $specialty => $glyph): ?>
+            <?php $active = $filters['specialty'] === $specialty; ?>
+            <a class="category-chip<?= $active ? ' active' : '' ?>"<?= $active ? ' aria-current="true"' : '' ?> href="<?= $e($ui->url(['specialty' => $active ? null : $specialty, 'page' => null])) ?>">
+                <?= $ui->icon($glyph) ?><?= $e($specialty) ?>
+            </a>
+        <?php endforeach ?>
+    </nav>
 <form class="filter-bar card" method="get" action="/repair" role="search">
     <label class="search-field filter-search"><?= $ui->icon('search') ?><span class="sr-only">Search technicians</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" maxlength="100" placeholder="Name or specialty"></label>
     <div class="form-grid filter-grid filter-inline">
@@ -12,6 +30,7 @@ echo $ui->heading('wrench', 'Find a technician', $total . ' ' . ($total === 1 ? 
     </div>
     <button class="button button-primary" type="submit"><?= $ui->icon('search') ?>Search</button>
 </form>
+<p class="browse-count"><?= $total ?> <?= $total === 1 ? 'technician' : 'technicians' ?></p>
 <?php if ($results['items'] === []): ?>
     <?= $ui->emptyState('wrench', 'No technicians match yet.', $ui->link('/repair', 'Clear filters', 'close', 'button button-outline')) ?>
 <?php else: ?>
@@ -29,3 +48,4 @@ echo $ui->heading('wrench', 'Find a technician', $total . ' ' . ($total === 1 ? 
     </div>
     <?= $ui->pagination($total, $pageNumber, $pageSize) ?>
 <?php endif ?>
+</section>

@@ -7,6 +7,15 @@
       "1040": "/assets/images/hero-phone-1040.f6a7ad7c56.webp"
     }
   },
+  "hero-discover": {
+    "width": 1200,
+    "height": 900,
+    "sources": {
+      "480": "/assets/images/hero-discover-480.da336b9080.webp",
+      "800": "/assets/images/hero-discover-800.6ce798a5b4.webp",
+      "1200": "/assets/images/hero-discover-1200.a6b2e6ca6d.webp"
+    }
+  },
   "phone-blue": {
     "width": 640,
     "height": 480,
