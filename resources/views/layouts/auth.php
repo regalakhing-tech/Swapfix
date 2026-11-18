@@ -4,7 +4,14 @@ declare(strict_types=1);
 use SwapFix\Support\Assets;
 
 /** @var SwapFix\Application\Ui $ui @var callable $e @var string $content */
-$authArt = Assets::image('scene-auth');
+$registration = $ui->path === '/register' && isset($old['account_type']);
+$signIn = $ui->path === '/login';
+$layoutClass = match (true) {
+    $registration => ' auth-layout--register',
+    $signIn => '',
+    default => ' auth-layout--single',
+};
+$authArt = $registration || $signIn ? Assets::image($registration ? 'hero-discover' : 'scene-auth') : null;
 ?>
 <!doctype html>
 <html lang="en">
@@ -23,19 +30,24 @@ $authArt = Assets::image('scene-auth');
 <body class="auth-page">
 <a class="skip-link" href="#main">Skip to content</a>
 <?php $publicPath = $ui->path; $publicSignedIn = $ui->session !== null; require __DIR__ . '/../partials/public-header.php'; ?>
-<main class="container auth-layout" id="main">
-    <div class="auth-form-panel">
-        <div class="auth-form-content"><?= $content ?></div>
-    </div>
-    <aside class="auth-visual-panel" aria-labelledby="auth-visual-title">
-        <div class="auth-visual-copy">
-            <h2 id="auth-visual-title">Your gadgets in one place.</h2>
-            <p>Manage listings, trades, and repair updates with your SwapFix account.</p>
-        </div>
-        <div class="auth-visual-art" aria-hidden="true">
-            <img src="<?= $e($authArt['src']) ?>" srcset="<?= $e($authArt['srcset']) ?>" sizes="(max-width: 700px) 120px, 254px" width="<?= $authArt['width'] ?>" height="<?= $authArt['height'] ?>" alt="" decoding="async">
-        </div>
-    </aside>
+<main class="container auth-layout<?= $e($layoutClass) ?>" id="main">
+    <div class="auth-form-content"><?= $content ?></div>
+    <?php if ($authArt !== null): ?>
+        <aside class="auth-visual-panel" aria-labelledby="auth-visual-title">
+            <div class="auth-visual-art" aria-hidden="true">
+                <img src="<?= $e($authArt['src']) ?>" srcset="<?= $e($authArt['srcset']) ?>" sizes="(max-width: 500px) 92px, (max-width: 760px) 116px, 320px" width="<?= $authArt['width'] ?>" height="<?= $authArt['height'] ?>" alt="" decoding="async">
+            </div>
+            <div class="auth-visual-copy">
+                <?php if ($registration): ?>
+                    <h2 id="auth-visual-title">Choose the right account</h2>
+                    <p>Both account types can use the marketplace. Choose Technician if you also offer repairs.</p>
+                <?php else: ?>
+                    <h2 id="auth-visual-title">Pick up where you left off</h2>
+                    <p>Open My activity after signing in to see your listings, trade offers, and repairs.</p>
+                <?php endif ?>
+            </div>
+        </aside>
+    <?php endif ?>
 </main>
 <?php require __DIR__ . '/../partials/toasts.php' ?>
 </body>
