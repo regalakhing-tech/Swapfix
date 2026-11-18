@@ -71,7 +71,7 @@ foreach ($offers as $offer) {
                 <p class="muted-line">Complete this after the physical handover.</p>
                 <div class="action-stack">
                     <?php if ($acceptedOffer): ?><?= $ui->link('/offers/' . $acceptedOffer['id'], 'View agreed offer', 'eye', 'button button-outline') ?><?php endif ?>
-                    <?= $ui->postButton('/exchange/' . $id . '/complete', 'Mark completed', 'check-circle', 'button button-primary', [], ['Complete exchange?', 'Confirm the handover happened. The listing will close.', 'Complete']) ?>
+                    <?= $ui->postButton('/exchange/' . $id . '/complete', 'Mark completed', 'check-circle', 'button button-primary', ['expected_offer_id' => $exchange['accepted_offer_id']], ['Complete exchange?', 'Confirm the handover happened. The listing will close.', 'Complete']) ?>
                     <?= $ui->dialogLink('cancel-dialog', 'cancel', 'Cancel agreement', 'close', 'button button-outline') ?>
                 </div>
             </section>
@@ -93,6 +93,7 @@ foreach ($offers as $offer) {
     <?= $ui->dialogStart('cancel-dialog', 'Cancel agreement', 'cancel') ?>
     <form method="post" action="/exchange/<?= $e($id) ?>/cancel-agreement" class="stack-form">
         <?= $ui->csrf() ?>
+        <input type="hidden" name="expected_offer_id" value="<?= $e($exchange['accepted_offer_id']) ?>">
         <?= $ui->textarea('note', 'Reason', '', ['required' => true, 'minlength' => 2, 'maxlength' => 1000]) ?>
         <button class="button button-primary button-block" type="submit">Cancel agreement</button>
     </form>

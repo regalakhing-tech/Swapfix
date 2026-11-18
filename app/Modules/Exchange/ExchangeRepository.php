@@ -70,14 +70,14 @@ final class ExchangeRepository
         return $this->db->rpc('sf_remove_exchange', ['p_id' => $id], $token);
     }
 
-    public function complete(string $token, string $id): array
+    public function complete(string $token, string $id, ?string $expectedOfferId): array
     {
-        return $this->db->rpc('sf_complete_exchange', ['p_exchange_id' => $id], $token);
+        return $this->db->rpc('sf_complete_exchange', ['p_exchange_id' => $id, 'p_expected_offer_id' => $expectedOfferId], $token);
     }
 
-    public function cancelAgreement(string $token, string $id, string $note): array
+    public function cancelAgreement(string $token, string $id, string $note, ?string $expectedOfferId): array
     {
-        return $this->db->rpc('sf_cancel_agreement', ['p_exchange_id' => $id, 'p_note' => $note], $token);
+        return $this->db->rpc('sf_cancel_agreement', ['p_exchange_id' => $id, 'p_note' => $note, 'p_expected_offer_id' => $expectedOfferId], $token);
     }
 
     public function submitOffer(string $token, string $exchangeId, array $terms, array $photoPaths): array

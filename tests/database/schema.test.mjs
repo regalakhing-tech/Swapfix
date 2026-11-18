@@ -300,6 +300,49 @@ describe('exchange', () => {
     assert.deepEqual(notes.map(row => row.title), ['Exchange closed']);
   });
 
+  it('applies completion and cancellation only to the expected agreement', async () => {
+    const { owner, offerer, exchange, offer } = await setup();
+    const rival = await t.user('customer');
+    const rivalOffer = (await t.rpc(rival, 'sf_submit_offer', offerArgs(exchange))).id;
+    const expected = id => ({ p_exchange_id: exchange, p_expected_offer_id: id });
+    const cancel = id => ({ ...expected(id), p_note: 'Cannot make the handover' });
+
+    await t.rpc(owner, 'sf_accept_offer', { p_offer_id: offer, p_expected_version: 1 });
+    await t.rpc(offerer, 'sf_cancel_agreement', cancel(offer));
+    await t.rpc(owner, 'sf_accept_offer', { p_offer_id: rivalOffer, p_expected_version: 1 });
+
+    for (const id of [offer, null]) {
+      await rejects(t.rpc(owner, 'sf_complete_exchange', expected(id)), 'SF409', /agreement changed/i);
+      await rejects(t.rpc(owner, 'sf_cancel_agreement', cancel(id)), 'SF409', /agreement changed/i);
+    }
+    await rejects(t.rpc(offerer, 'sf_cancel_agreement', cancel(rivalOffer)), 'SF404');
+    await rejects(t.rpc(rival, 'sf_complete_exchange', expected(rivalOffer)), 'SF404');
+    assert.deepEqual(await t.query(owner, 'select status, accepted_offer_id from public.exchange_listings where id = $1', [exchange]), [
+      { status: 'agreed', accepted_offer_id: rivalOffer },
+    ]);
+    assert.deepEqual(await t.query(owner, 'select status from public.trade_offers where id = $1', [rivalOffer]), [{ status: 'accepted' }]);
+
+    await t.rpc(owner, 'sf_complete_exchange', expected(rivalOffer));
+    assert.deepEqual(await t.query(owner, 'select status from public.trade_offers where id = $1', [rivalOffer]), [{ status: 'completed' }]);
+  });
+
+  it('limits expected agreement RPC execution to the authenticated role', async () => {
+    const signatures = [
+      'public.sf_complete_exchange(uuid, uuid)',
+      'swapfix_private.api_complete_exchange(uuid, uuid)',
+      'public.sf_cancel_agreement(uuid, text, uuid)',
+      'swapfix_private.api_cancel_agreement(uuid, text, uuid)',
+      'swapfix_private.require_expected_agreement(uuid, uuid, boolean)',
+    ];
+    for (const signature of signatures) {
+      const [privileges] = await t.admin(`select
+        has_function_privilege('authenticated', $1, 'execute') as authenticated,
+        has_function_privilege('anon', $1, 'execute') as anon,
+        has_function_privilege('service_role', $1, 'execute') as service_role`, [signature]);
+      assert.deepEqual(privileges, { authenticated: !signature.includes('require_expected_agreement'), anon: false, service_role: false }, signature);
+    }
+  });
+
   it('hides negotiations from outsiders and lets the offerer withdraw', async () => {
     const { owner, offerer, offer } = await setup();
     const outsider = await t.user('customer');

@@ -52,7 +52,7 @@ echo $ui->heading('cash', 'Trade offer', $exchange['title'], $ui->link('/exchang
                         <?= $ui->dialogLink('counter-dialog', 'counter', 'Counteroffer', 'swap', 'button button-outline') ?>
                         <?= $ui->dialogLink('decline-dialog', 'decline', 'Decline', 'close', 'button button-outline') ?>
                     <?php endif ?>
-                    <?php if ($actions['complete']): ?><?= $ui->postButton('/exchange/' . $exchange['id'] . '/complete', 'Mark completed', 'check-circle', 'button button-primary', [], ['Complete exchange?', 'Confirm the handover happened.', 'Complete']) ?><?php endif ?>
+                    <?php if ($actions['complete']): ?><?= $ui->postButton('/exchange/' . $exchange['id'] . '/complete', 'Mark completed', 'check-circle', 'button button-primary', ['expected_offer_id' => $offer['id']], ['Complete exchange?', 'Confirm the handover happened.', 'Complete']) ?><?php endif ?>
                     <?php if ($actions['cancelAgreement']): ?><?= $ui->dialogLink('cancel-dialog', 'cancel', 'Cancel agreement', 'close', 'button button-outline') ?><?php endif ?>
                     <?php if ($actions['withdraw']): ?><?= $ui->postButton('/offers/' . $offer['id'] . '/withdraw', 'Withdraw offer', 'trash', 'button button-outline', [], ['Withdraw offer?', 'This cannot be undone.', 'Withdraw']) ?><?php endif ?>
                 </div>
@@ -88,6 +88,7 @@ echo $ui->heading('cash', 'Trade offer', $exchange['title'], $ui->link('/exchang
     <?= $ui->dialogStart('cancel-dialog', 'Cancel agreement', 'cancel') ?>
     <form method="post" action="/exchange/<?= $e($exchange['id']) ?>/cancel-agreement" class="stack-form">
         <?= $ui->csrf() ?>
+        <input type="hidden" name="expected_offer_id" value="<?= $e($offer['id']) ?>">
         <?= $ui->textarea('note', 'Reason', '', ['required' => true, 'minlength' => 2, 'maxlength' => 1000]) ?>
         <button class="button button-primary button-block" type="submit">Cancel agreement</button>
     </form>

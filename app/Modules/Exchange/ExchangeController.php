@@ -74,14 +74,16 @@ final class ExchangeController extends Controller
     {
         $user = $this->user($request);
         $id = $this->id($request, $args);
-        return $this->act($request, $response, fn () => $this->app->exchanges()->complete($user->accessToken, $id), 'Exchange marked completed.', '/exchange/' . $id);
+        return $this->act($request, $response, fn (Input $input) => $this->app->exchanges()->complete($user->accessToken, $id, $input->uuid('expected_offer_id')), 'Exchange marked completed.', '/exchange/' . $id);
     }
 
     public function cancelAgreement(Request $request, Response $response, array $args): Response
     {
         $user = $this->user($request);
         $id = $this->id($request, $args);
-        return $this->act($request, $response, fn (Input $input) => $this->app->exchanges()->cancelAgreement($user->accessToken, $id, $input->text('note', 1000)), 'Agreement cancelled.', '/exchange/' . $id, '/exchange/' . $id . '?cancel=1');
+        return $this->act($request, $response, fn (Input $input) => $this->app->exchanges()->cancelAgreement(
+            $user->accessToken, $id, $input->text('note', 1000), $input->uuid('expected_offer_id')
+        ), 'Agreement cancelled.', '/exchange/' . $id, '/exchange/' . $id . '?cancel=1');
     }
 
     public function submitOffer(Request $request, Response $response, array $args): Response

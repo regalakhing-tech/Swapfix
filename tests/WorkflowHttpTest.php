@@ -84,6 +84,10 @@ final class WorkflowHttpTest extends TestCase
         ], 'sf_submit_offer', ['p_exchange_id' => $id, 'p_cash_amount' => '500.00', 'p_cash_payer' => 'offerer'], "/offers/$related", ['id' => $related]];
         yield 'accept current offer' => ['customer', "/offers/$id/accept", ['version' => '2'],
             'sf_accept_offer', ['p_offer_id' => $id, 'p_expected_version' => 2], "/offers/$id"];
+        yield 'complete the displayed agreement' => ['customer', "/exchange/$id/complete", ['expected_offer_id' => $related],
+            'sf_complete_exchange', ['p_exchange_id' => $id, 'p_expected_offer_id' => $related], "/exchange/$id"];
+        yield 'cancel the displayed agreement' => ['customer', "/exchange/$id/cancel-agreement", ['expected_offer_id' => $related, 'note' => 'Meetup cancelled.'],
+            'sf_cancel_agreement', ['p_exchange_id' => $id, 'p_expected_offer_id' => $related, 'p_note' => 'Meetup cancelled.'], "/exchange/$id"];
         yield 'technician requests added-cost approval' => ['technician', "/repairs/$id/added-costs", [
             'reason' => 'Damaged connector', 'proposed_work' => 'Replace connector', 'amount' => '350.00',
         ], 'sf_request_added_cost', ['p_repair_id' => $id, 'p_amount' => '350.00', 'p_proposed_work' => 'Replace connector'], "/repairs/$id"];

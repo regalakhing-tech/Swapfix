@@ -4,7 +4,7 @@ The selected hosted project is **kiyozen28's Project**, reference `tndhhskcfhqyw
 
 ## Schema and access
 
-Eight ordered migrations create 18 application tables covering profiles and private settings; technicians/services; product listings; exchanges/offers/immutable terms/events; repair requests/quotations/added costs/history; contextual conversations/messages; notifications/email outbox; and reviews.
+The ordered migrations create 18 application tables covering profiles and private settings; technicians/services; product listings; exchanges/offers/immutable terms/events; repair requests/quotations/added costs/history; contextual conversations/messages; notifications/email outbox; and reviews.
 
 Every application table has RLS enabled. Exposed tables receive SELECT grants only; guarded RPCs validate mutations. Definer functions live in the unexposed `swapfix_private` schema with a fixed search path. Actor IDs come from verified Auth identity.
 
@@ -24,6 +24,8 @@ After installation, Table Editor shows 18 SwapFix tables plus pre-existing table
 **Unsaved edits** concerns SQL query text. Save the query before reloading if you want to retain its text; it does not undo committed database changes. A stale table sidebar can be refreshed after installation.
 
 SQL Editor does not register CLI migration history. Before using CLI migrations for subsequent changes, compare the installed schema and reconcile history using the current CLI's migration-repair workflow. Do not push the initial migrations blindly over an installed project.
+
+For an existing installation, apply [the agreement migration](migrations/20261119090900_exchange_agreement_version.sql) before releasing the PHP version that passes the accepted offer ID. The migration leaves the original RPC signatures available during deployment. The updated forms prevent an older page from changing a newer agreement.
 
 ## Application connection
 
