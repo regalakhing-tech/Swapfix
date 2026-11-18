@@ -119,8 +119,8 @@ final class AuthController extends Controller
         }
         $code = Input::body($request)->all()['code'] ?? '';
         $code = is_string($code) ? trim($code) : '';
-        if (!preg_match('/\A[0-9]{6}\z/', $code)) {
-            return $this->verificationPage($request, $response, $pending, 'Enter the six-digit code from your email.', 422);
+        if (!preg_match('/\A(?:[0-9]{6}|[0-9]{8})\z/', $code)) {
+            return $this->verificationPage($request, $response, $pending, 'Enter the verification code from your email.', 422);
         }
         try {
             $tokens = $this->app->auth()->verifySignup($pending['m'], $code);

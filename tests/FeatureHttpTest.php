@@ -5,6 +5,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response as Upstream;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use SwapFix\Application\Application;
@@ -95,6 +96,18 @@ final class FeatureHttpTest extends TestCase
         self::assertStringContainsString('This form expired', (string) $rejected->getBody());
     }
 
+    public function testExpiredRegistrationAndSignInFormsReopenWithoutSubmitting(): void
+    {
+        $app = $this->app();
+        foreach (['/login', '/register'] as $path) {
+            $request = $this->request('POST', $path)->withHeader('Origin', 'https://swapfix.example.test')
+                ->withParsedBody(['_csrf' => 'expired-token']);
+            $result = $app->handle($request);
+            self::assertSame(303, $result->getStatusCode());
+            self::assertSame($path, $result->getHeaderLine('Location'));
+        }
+    }
+
     public function testUnauthenticatedPublishingReturnsToSignIn(): void
     {
         $response = $this->app()->handle($this->request('GET', '/market/new'));
@@ -102,7 +115,14 @@ final class FeatureHttpTest extends TestCase
         self::assertSame('/login?next=%2Fmarket%2Fnew', $response->getHeaderLine('Location'));
     }
 
-    public function testSignupCodeResendsAndVerifiesBeforeCreatingProfile(): void
+    public static function signupCodes(): iterable
+    {
+        yield 'six digits' => ['000042'];
+        yield 'eight digits' => ['00000042'];
+    }
+
+    #[DataProvider('signupCodes')]
+    public function testSignupCodeResendsAndVerifiesBeforeCreatingProfile(string $code): void
     {
         $email = 'new-user@example.test';
         $userId = '00000000-0000-4000-8000-000000000003';
@@ -116,9 +136,9 @@ final class FeatureHttpTest extends TestCase
                 return new Upstream(200, [], '{}');
             },
             new Upstream(403, [], '{"error_code":"otp_expired","message":"Upstream details"}'),
-            static function ($request) use ($email): Upstream {
+            static function ($request) use ($email, $code): Upstream {
                 self::assertSame('/auth/v1/verify', $request->getUri()->getPath());
-                self::assertSame(['email' => $email, 'token' => '000042', 'type' => 'signup'], json_decode((string) $request->getBody(), true));
+                self::assertSame(['email' => $email, 'token' => $code, 'type' => 'signup'], json_decode((string) $request->getBody(), true));
                 return new Upstream(200, [], json_encode([
                     'access_token' => 'test-access', 'refresh_token' => 'test-refresh',
                     'user' => ['email' => $email],
@@ -160,14 +180,14 @@ final class FeatureHttpTest extends TestCase
         self::assertSame('/verify-email', $post('/verify-email/resend')->getHeaderLine('Location'));
         $invalid = $post('/verify-email', ['code' => '0000427']);
         self::assertSame(422, $invalid->getStatusCode());
-        self::assertStringContainsString('Enter the six-digit code', (string) $invalid->getBody());
+        self::assertStringContainsString('Enter the verification code', (string) $invalid->getBody());
         $expired = $post('/verify-email', ['code' => '111111']);
         self::assertSame(422, $expired->getStatusCode());
         self::assertStringContainsString('expired', (string) $expired->getBody());
         self::assertStringNotContainsString('Upstream details', (string) $expired->getBody());
 
         // The email in the encrypted pending signup is authoritative.
-        $verified = $post('/verify-email', ['code' => '000042', 'email' => 'other@example.test']);
+        $verified = $post('/verify-email', ['code' => $code, 'email' => 'other@example.test']);
         self::assertSame('/technician/profile', $verified->getHeaderLine('Location'));
         $saveCookies($verified);
         self::assertNotEmpty($cookies['__Host-swapfix_session']);

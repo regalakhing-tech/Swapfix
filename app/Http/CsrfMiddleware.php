@@ -31,12 +31,18 @@ final class CsrfMiddleware implements MiddlewareInterface
             throw new HttpForbiddenException($request, 'This form expired. Go back, refresh and try again.');
         }
         if (!$csrf->valid($token)) {
-            if (in_array($path, ['/verify-email', '/verify-email/resend'], true)) {
+            $retryPath = match ($path) {
+                '/verify-email', '/verify-email/resend' => '/verify-email',
+                '/register', '/login' => $path,
+                default => null,
+            };
+            if ($retryPath !== null) {
                 $flash = $request->getAttribute('flash');
                 if ($flash instanceof Flash) {
-                    $flash->error('Your verification form expired. Please try again.');
+                    $form = $retryPath === '/verify-email' ? 'verification form' : 'form';
+                    $flash->error('Your ' . $form . ' expired. Please try again.');
                 }
-                return (new Response(303))->withHeader('Location', '/verify-email');
+                return (new Response(303))->withHeader('Location', $retryPath);
             }
             throw new HttpForbiddenException($request, 'This form expired. Go back, refresh and try again.');
         }
