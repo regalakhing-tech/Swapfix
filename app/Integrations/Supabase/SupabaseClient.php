@@ -6,6 +6,7 @@ namespace SwapFix\Integrations\Supabase;
 use GuzzleHttp\Client;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use SwapFix\Support\DomainError;
 use SwapFix\Support\IntegrationException;
 
 final class SupabaseClient
@@ -13,7 +14,7 @@ final class SupabaseClient
     private readonly ClientInterface $http;
     private readonly string $url;
 
-    public function __construct(string $url, private readonly string $publishableKey, ?ClientInterface $http = null)
+    public function __construct(string $url, private readonly string $publishableKey, ?ClientInterface $http = null, bool $serverJob = false)
     {
         if ($url === '' || $publishableKey === '') {
             throw new \RuntimeException('Supabase is not configured.');
@@ -24,11 +25,22 @@ final class SupabaseClient
             || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment']) || !in_array($parts['path'] ?? '', ['', '/'], true)) {
             throw new \InvalidArgumentException('A valid HTTPS Supabase project URL is required.');
         }
-        if (!str_starts_with($publishableKey, 'sb_publishable_')) {
+        if (!str_starts_with($publishableKey, $serverJob ? 'sb_secret_' : 'sb_publishable_')) {
             throw new \InvalidArgumentException('Use a Supabase publishable key for user-scoped requests.');
         }
         $this->url = rtrim($url, '/');
         $this->http = $http ?? new Client();
+    }
+
+    /** For the scheduled mail worker only. User requests must never use this client. */
+    public static function forServerJob(string $url, string $secretKey, ?ClientInterface $http = null): self
+    {
+        return new self($url, $secretKey, $http, true);
+    }
+
+    public function url(): string
+    {
+        return $this->url;
     }
 
     public function request(string $method, string $path, array $options = [], ?string $accessToken = null): array
@@ -50,10 +62,10 @@ final class SupabaseClient
             throw new IntegrationException('Supabase is temporarily unreachable.');
         }
         $status = $response->getStatusCode();
-        if ($status < 200 || $status >= 300) {
-            throw new IntegrationException('Supabase request failed.', $status);
-        }
         $body = (string) $response->getBody();
+        if ($status < 200 || $status >= 300) {
+            $this->throwFailure($status, $body);
+        }
         if ($body === '') {
             return [];
         }
@@ -66,5 +78,18 @@ final class SupabaseClient
             throw new IntegrationException('Supabase returned an invalid response.');
         }
         return $decoded;
+    }
+
+    private function throwFailure(int $status, string $body): never
+    {
+        $error = json_decode($body, true);
+        $error = is_array($error) ? $error : [];
+        $code = $error['code'] ?? null;
+        // Only SwapFix's own SF### database errors carry messages written for users.
+        if (is_string($code) && preg_match('/^SF[0-9]{3}$/', $code) === 1 && is_string($error['message'] ?? null)) {
+            throw new DomainError($error['message'], (int) substr($code, 2));
+        }
+        $reason = $error['error_code'] ?? (is_string($code) ? $code : null);
+        throw new IntegrationException('Supabase request failed.', $status, is_string($reason) ? $reason : null);
     }
 }

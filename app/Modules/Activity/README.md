@@ -1,18 +1,11 @@
 # Activity Module
 
-Status: module specification. The activity page and API are not implemented in this starter.
+Browser workflows are implemented and registered in `routes/web.php` (the mail worker is in `routes/api.php`).
 
-## README Features
+Files: ActivityController.php, ActivityRepository.php.
 
-- Personal product and exchange listings.
-- Trade offers sent and received.
-- Repair requests, quotation decisions and current repair progress.
-- Completed repair history, conversations and reviews.
+Routes: /activity.
 
-Page: `/activity`.
+The user's listings, exchanges, offers, repairs, conversations and reviews are read through ownership/participant policies. This page uses real records, separate from the illustrative homepage.
 
-API route to implement: `GET /api/activity`, with bounded filters or separate paginated queries for listings, offers and repairs.
-
-Build this module after its source records exist. Use verified request identity and the participant/ownership rules of each source module. Retain access to an owner's sold or removed listings where the record remains stored. Completion history should use the stored agreed amount and completion timestamp.
-
-If combining sources in a PostgreSQL view, use an RLS-respecting security-invoker view and review its grants. An activity aggregation must not make another user's private conversations, offers or repairs visible.
+All mutations call guarded Supabase RPCs; templates are under `resources/views/`. See [setup](../../../docs/SETUP.md) and [database](../../../supabase/README.md) for configuration and verification.

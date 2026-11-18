@@ -8,6 +8,7 @@
     root * /app/public
     encode zstd gzip
     header /assets/* Cache-Control "public, max-age=31536000, immutable"
+    header /assets/* Vercel-CDN-Cache-Control "public, s-maxage=31536000, immutable"
     @private path /.env* /.git/* /composer.* /app/* /config/* /bootstrap/* /resources/* /routes/* /scripts/* /supabase/* /tests/* /router.php
     respond @private 404
     php_server

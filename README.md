@@ -2,13 +2,13 @@
 
 **A Web-Based Marketplace for Gadget Sales, Exchanges, and Repair Services**
 
-This document describes the planned application, its users, features, pages, workflows, and functional requirements. It is a project specification; features listed here are not claims of completed implementation.
+This document describes SwapFix's users, features, pages, workflows, and functional requirements. The PHP application implements the core workflows below; hosted configuration and verification are tracked separately in the setup guide.
 
-### PHP Starter Project
+### PHP Application
 
-The project now includes a PHP backend foundation with Composer, Slim routing, Supabase adapters, PHPMailer, starter database schemas, and Vercel container deployment files. The business features below remain the application roadmap.
+The project includes customer and technician accounts, product listings, exchange offers and counteroffers, repair quotations and added-cost approval, tracking, contextual chat, notifications, reviews and activity history. PHP and Slim render the pages. Supabase provides Auth, PostgreSQL and Storage. PHPMailer supports optional SMTP notifications, and Vercel runs the PHP application in a FrankenPHP container.
 
-The public interface now includes the supplied transparent SwapFix logo, a blue-and-teal visual system, a generated gadget hero image, and sample gadget photos from RussDtech. Its preview supports Buy & Sell, Exchange, and Repair sections, search, categories, price sorting, detail dialogs, and browser-local saved items. These sample records are separate from live Supabase inventory.
+The public homepage uses the transparent SwapFix logo, blue and teal brand colors, a generated gadget hero and sample photos from RussDtech. Its illustrative catalog is separate from live inventory at `/market`, `/exchange` and `/repair`. New projects begin with empty live lists. Participants arrange payments and handovers through chat.
 
 - [Setup and deployment instructions](docs/SETUP.md)
 - [Folder structure and module responsibilities](docs/FILE_STRUCTURE.md)
@@ -22,7 +22,7 @@ Copy-Item .env.example .env
 composer dev
 ```
 
-Open `http://127.0.0.1:8000`. Configure Supabase and SMTP in `.env` when you are ready to connect those services. Run `composer test` to verify the starter.
+Open `http://127.0.0.1:8000`. Preserve an existing `.env` instead of copying over it. Configure the selected Supabase project and a unique `APP_KEY`; optional SMTP credentials enable application email. See [SETUP](docs/SETUP.md) for PHP, database and DOM checks.
 
 ## 1. Project Overview
 

@@ -5,6 +5,8 @@ namespace SwapFix\Controllers;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use SwapFix\Http\Flash;
+use SwapFix\Http\UserSession;
 use SwapFix\Preview\Catalog;
 use SwapFix\Support\Assets;
 use SwapFix\Support\Icon;
@@ -30,9 +32,13 @@ final class HomeController
             $params = array_replace(['view'=>$view,'category'=>$category,'q'=>$search,'sort'=>$sort], $changes);
             return '/?' . http_build_query(array_filter($params, static fn ($value): bool => $value !== '' && $value !== null)) . '#explore';
         };
+        $session = $request->getAttribute('session');
+        $signedIn = $session instanceof UserSession;
+        $flash = $request->getAttribute('flash');
+        $flashes = $flash instanceof Flash ? $flash->incoming() : [];
         ob_start();
         require dirname(__DIR__, 2) . '/resources/views/home.php';
         $response->getBody()->write((string) ob_get_clean());
-        return $response->withHeader('Content-Type', 'text/html; charset=utf-8')->withHeader('Cache-Control', 'no-cache');
+        return $response->withHeader('Content-Type', 'text/html; charset=utf-8')->withHeader('Cache-Control', $signedIn ? 'no-store' : 'no-cache');
     }
 }

@@ -9,3 +9,5 @@ Work only in this repository. Do not read `.env`, credential stores, browser pro
 Implement real backend behavior and UI rather than marking sample records as live. Keep Supabase user-scoped requests under RLS. Store authorization in database records, not mutable user metadata. No PHP file sessions or permanent local uploads on Vercel. All writes require verified identity, ownership/participant checks and CSRF protection where browser cookies are used. State changes and approval decisions must be atomic and guarded in the database.
 
 Use meaningful tests for ownership, state transitions, quotation approvals, message participants and review eligibility. Test locally without sending real email or depending on production credentials. Keep development dependencies under ignored `.tools/` when needed. Update setup documentation to describe what actually works and any external configuration still needed.
+
+Before final verification, read `.tools/schema-review.md` if present and resolve its independent review findings. The coordinator has not applied the hosted schema yet.

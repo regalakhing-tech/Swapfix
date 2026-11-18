@@ -1,9 +1,7 @@
 // DOM unit checks only. This does not open or automate a browser or verify visual layout.
-import { createRequire } from 'node:module';
 import { readFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const require = createRequire(new URL('../.tools/package.json',import.meta.url));
-const { JSDOM } = require('jsdom');
+import { JSDOM } from 'jsdom';
 const origin = process.env.SWAPFIX_TEST_ORIGIN || 'http://127.0.0.1:8000';
 const response = await fetch(origin);
 assert.equal(response.status,200);

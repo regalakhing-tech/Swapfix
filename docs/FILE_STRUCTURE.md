@@ -1,96 +1,29 @@
 # SwapFix File Structure
 
-The starter separates public files, PHP application code, integration configuration, templates, database preparation, tests and documentation. It does not expose the project root as a website directory.
+| Path | Responsibility |
+| --- | --- |
+| `app/Application/` | Container, application assembly, view helpers, safe errors and upload coordination |
+| `app/Http/` | Sessions, CSRF, role/profile guards, input parsing and security headers |
+| `app/Integrations/` | Supabase Auth, Data API, Storage and PHPMailer adapters |
+| `app/Modules/Accounts/` | Registration, login, onboarding and profiles |
+| `app/Modules/Marketplace/` | Search, listings, updates and purchase inquiries |
+| `app/Modules/Exchange/` | Trade listings, offers, counters, decisions and completion |
+| `app/Modules/Repair/` | Technicians, services, quotes, approvals, tracking and reviews |
+| `app/Modules/Messaging/` | Participant conversations and contextual threads |
+| `app/Modules/Notifications/` | Notifications and optional SMTP outbox worker |
+| `app/Modules/Activity/` | Personal listings, offers, repairs, chats and reviews |
+| `app/Preview/`, `resources/data/catalog.php` | Explicitly illustrative homepage catalog |
+| `app/Support/` | Crypto, decimal money, labels, UUIDs, icons and versioned assets |
+| `routes/` | Browser routes and read/health APIs |
+| `resources/views/` | PHP layouts, pages, partials and email templates |
+| `public/` | Only web document root, HTTP entry point and optimized assets |
+| `config/` | Runtime/service settings and production PHP configuration |
+| `supabase/migrations/` | Eight ordered schema, business-rule and security migrations |
+| `supabase/install.sql` | Generated first-install SQL Editor alternative |
+| `tests/` | PHP, PostgreSQL and DOM behavior checks |
+| `scripts/` | Syntax/config checks, explicit email test, image/SQL generation and deployment-input checker |
+| `docs/` | Feature specification, setup, design references and assets |
+| `originals/` | Retained design sources, excluded from hosting |
+| `Dockerfile`, `Caddyfile`, `vercel.json` | PHP container build, routing and hosting |
 
-```text
-Subebe_Final_WS102/
-├── app/
-│   ├── Controllers/
-│   │   ├── HomeController.php          # Starter page
-│   │   └── HealthController.php        # Runtime and configuration status
-│   ├── Http/
-│   │   ├── Json.php                    # JSON responses
-│   │   ├── RequireAuth.php             # Verified Supabase bearer identity
-│   │   └── SecurityHeaders.php         # Shared HTTP headers
-│   ├── Integrations/
-│   │   ├── Mail/Mailer.php             # PHPMailer SMTP adapter
-│   │   └── Supabase/
-│   │       ├── SupabaseClient.php      # HTTPS Auth, Data API and Storage access
-│   │       ├── Auth.php                # Sign up/in, verify, refresh and sign out
-│   │       └── Storage.php             # Validated user-owned image uploads
-│   ├── Modules/
-│   │   ├── Accounts/README.md
-│   │   ├── Marketplace/README.md
-│   │   ├── Exchange/README.md
-│   │   ├── Repair/README.md
-│   │   ├── Messaging/README.md
-│   │   ├── Notifications/README.md
-│   │   ├── Reviews/README.md
-│   │   └── Activity/README.md
-│   └── Support/
-│       ├── Env.php                     # Process/local configuration lookup
-│       ├── Assets.php                  # Versioned assets and responsive image manifest
-│       ├── Icon.php                    # Shared inline SVG icons
-│       └── IntegrationException.php    # Safe integration failures
-├── bootstrap/app.php                   # Autoload, environment, routes and errors
-├── config/
-│   ├── app.php                         # App name, origin, environment and timezone
-│   └── services.php                    # Supabase, upload and SMTP configuration
-├── public/                             # The ONLY web document root
-│   ├── index.php                       # HTTP entry point
-│   ├── router.php                      # Local PHP development router
-│   └── assets/css/app.css              # Starter page styles
-├── resources/views/
-│   ├── home.php                        # PHP page template
-│   └── emails/repair-update.php         # Escaped repair email template
-├── routes/
-│   ├── web.php                         # Browser routes
-│   └── api.php                         # API routes
-├── scripts/
-│   ├── check.php                       # Configuration / optional Data API check
-│   ├── lint.php                        # PHP syntax verification
-│   └── mail-test.php                   # Explicit CLI-only SMTP delivery test
-├── supabase/
-│   ├── config.toml                     # Local Supabase configuration
-│   ├── schemas/
-│   │   ├── 01_profiles.sql             # Private accounts and ownership policies
-│   │   ├── 02_technicians.sql          # Public technician details
-│   │   └── 03_product_listings.sql     # Marketplace records and ownership policies
-│   ├── setup/storage.sql               # Buckets and object access policies
-│   └── README.md                       # Database setup and verification guide
-├── tests/                              # HTTP, auth, Supabase and mail checks
-├── docs/                               # Setup, structure and implementation notes
-├── .env.example                        # Sanitized configuration template
-├── .gitignore                          # Local secrets and generated files
-├── .dockerignore                       # Container context exclusions
-├── .vercelignore                       # Deployment source exclusions
-├── Caddyfile                           # FrankenPHP public root and HTTP listener
-├── Dockerfile                          # Production PHP image and dependencies
-├── composer.json                       # PHP dependencies and commands
-├── composer.lock                       # Pinned dependency versions
-├── phpunit.xml                         # Test configuration
-├── vercel.json                         # Vercel Container framework selection
-└── README.md                           # Complete SwapFix feature specification
-```
-
-The UI also adds `app/Preview/Catalog.php`, illustrative records in `resources/data/catalog.php`, the generated `resources/data/images.json` manifest, a shared card partial under `resources/views/partials/`, and self-hosted files in `public/assets/images/`, `public/assets/fonts/`, and `public/assets/js/`. `originals/` retains design image sources outside the public directory and deployment image. These preview records do not modify Supabase.
-
-Composer generates `vendor/`. Supabase generates local metadata under its ignored internal directories. Vercel creates `.vercel/` after linking. `.env` is local and ignored.
-
-## Where to Add Features
-
-Each `app/Modules/<Name>/README.md` maps a part of the root requirements to its intended pages, routes, records and authorization rules. These module guides describe work to build; they are not working business endpoints.
-
-Keep feature-specific controllers and application services under their module. Register their routes in `routes/web.php` or `routes/api.php`. Place browser templates under `resources/views/<module>/`, mail templates under `resources/views/emails/`, and frontend assets under `public/assets/`.
-
-## Request Flow
-
-```text
-Browser -> public/index.php -> bootstrap/app.php -> routes
-        -> middleware -> controller -> application/integration service
-        -> Supabase or SMTP -> HTML/JSON response
-```
-
-For protected routes, add `RequireAuth` and read `user` and `access_token` from request attributes. The middleware verifies the token with Supabase before the route runs. Always pass that same access token to user-scoped Data API operations. Do not trust a submitted owner ID or a decoded, unverified JWT.
-
-Uploads go to Supabase Storage. Temporary PHP upload files are used only while forwarding the request. Supabase user sessions supply identity; this starter does not use PHP file sessions.
+Composer creates ignored `vendor/`; npm creates ignored `node_modules/` for development. Local `.env`, `.tools/`, `.vercel/` and logs are excluded from Git and hosting. Do not serve the repository root.

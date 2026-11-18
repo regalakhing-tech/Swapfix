@@ -21,10 +21,14 @@ final class Auth
         return $user;
     }
 
-    public function signUp(string $email, string $password): array
+    public function signUp(string $email, string $password, ?string $redirectTo = null): array
     {
         $this->validateCredentials($email, $password);
-        return $this->client->request('POST', '/auth/v1/signup', ['json' => ['email' => $email, 'password' => $password]]);
+        $options = ['json' => ['email' => $email, 'password' => $password]];
+        if ($redirectTo !== null) {
+            $options['query'] = ['redirect_to' => $redirectTo];
+        }
+        return $this->client->request('POST', '/auth/v1/signup', $options);
     }
 
     public function signIn(string $email, string $password): array

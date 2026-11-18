@@ -1,12 +1,10 @@
-import { createRequire } from 'node:module';
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { crc32 } from 'node:zlib';
 
-const require = createRequire(new URL('../.tools/package.json', import.meta.url));
-const sharp = require('sharp');
+import sharp from 'sharp';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const output = path.join(root, 'public/assets/images');

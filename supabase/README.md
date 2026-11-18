@@ -1,44 +1,34 @@
-# Supabase Starter Setup
+# SwapFix Database
 
-No hosted project is selected by these files. Review the intended target before applying SQL. The schemas prepare the first account, technician-profile and marketplace records; they do not claim that every README feature has a database implementation.
+The selected hosted project is **kiyozen28's Project**, reference `tndhhskcfhqywvxedpso`, endpoint `https://tndhhskcfhqywvxedpso.supabase.co`. Other projects visible to an unrelated CLI account are not this destination.
 
-## Starter Schemas
+## Schema and access
 
-Apply these files in order to a **new or reviewed, compatible project**, using its SQL Editor:
+Eight ordered migrations create 18 application tables covering profiles and private settings; technicians/services; product listings; exchanges/offers/immutable terms/events; repair requests/quotations/added costs/history; contextual conversations/messages; notifications/email outbox; and reviews.
 
-1. `schemas/01_profiles.sql`
-2. `schemas/02_technicians.sql`
-3. `schemas/03_product_listings.sql`
-4. `setup/storage.sql`
+Every application table has RLS enabled. Exposed tables receive SELECT grants only; guarded RPCs validate mutations. Definer functions live in the unexposed `swapfix_private` schema with a fixed search path. Actor IDs come from verified Auth identity.
 
-The table files describe a new schema and are not repeatable installers. If tables already exist, compare the existing structure and write a migration; do not overwrite an existing application. The storage script uses a transaction and creates policies once. Its bucket insert preserves existing bucket settings on conflict, so verify those settings separately if buckets with those names already exist.
+The `avatars` and `listing-images` buckets are public. `repair-images` and `offer-images` are private and shared with relevant participants through authorized signed URLs. Files use random names inside the uploader's UUID folder.
 
-After applying, confirm all three public tables have RLS enabled. Check policies and grants in the Dashboard. Run `composer check:supabase` through the PHP application, then test both owner access and cross-user denial with real test accounts.
+## First installation
 
-| Record | Public access | Authenticated access |
-| --- | --- | --- |
-| `profiles` | None | Read/create own profile; update own name, location and avatar only |
-| `technician_profiles` | Read intentionally public fields | Technician account can create/update its own public profile |
-| `product_listings` | Read Available/Reserved listings | Owners can also read Sold/Removed listings and manage their own records |
+Choose one path for a fresh compatible project:
 
-Signup and profile creation are separate steps. The account workflow must insert a profile using the authenticated user's ID after Auth confirmation/login. The starter does not install an Auth trigger or read account authorization from mutable user metadata.
+1. Apply `migrations/*.sql` in order through the Supabase CLI after authenticating to the correct account and linking the inspected project; or
+2. Copy all of **install.sql** into a new SQL Editor query in the selected project and run it once.
 
-## Storage
+Generate the installer with `node scripts/build-database-install.mjs`. It wraps all migrations in a transaction, aborts if SwapFix/profile objects or conflicting buckets already exist, preserves unrelated tables, reloads the API schema and lists the 18 protected tables. Do not rerun it to refresh a dashboard.
 
-| Bucket | Visibility | Intended files |
-| --- | --- | --- |
-| `avatars` | Public by object URL | User-selected profile images |
-| `listing-images` | Public by object URL | Product and exchange photos |
-| `repair-images` | Private | Customer repair photos |
+After installation, Table Editor shows 18 SwapFix tables plus pre-existing tables. Empty rows are normal before real users create records. Preserve the unrelated `game_inputs` and `plain_text_submissions` tables.
 
-All buckets limit uploads to JPEG, PNG or WebP images of at most 5 MiB. Objects use `user-uuid/random-filename.ext`. Owners can upload, inspect and delete their own objects. The adapter creates new names instead of overwriting existing objects.
+**Unsaved edits** concerns SQL query text. Save the query before reloading if you want to retain its text; it does not undo committed database changes. A stale table sidebar can be refreshed after installation.
 
-The Repair module must add job-participant access for technicians and protected download or signed-URL handling. Private repair photos must not be moved into the public listing bucket. Closing a listing does not automatically revoke access to a public image URL; image lifecycle and cleanup belong to the listing implementation.
+SQL Editor does not register CLI migration history. Before using CLI migrations for subsequent changes, compare the installed schema and reconcile history using the current CLI's migration-repair workflow. Do not push the initial migrations blindly over an installed project.
 
-## Declarative Schema Workflow
+## Application connection
 
-`config.toml` was generated by the Supabase CLI and points `db.migrations.schema_paths` at `schemas/*.sql`. For subsequent development, edit desired table definitions there, generate a migration with the installed CLI's documented diff workflow, inspect it, and apply it to the intended environment. Bucket rows and storage policies are kept separately in `setup/storage.sql`; include reviewed changes to those in explicit migrations.
+Set this project's URL and publishable key in ignored local `.env` and Vercel environment variables. Normal requests use the Data API with the current user's access token. They need no database password or privileged service key.
 
-Use the current CLI's `--help` before linking, diffing or pushing. CLI commands and hosted-target defaults can change. A local Supabase stack requires Docker; preparing these files does not start that stack or modify a hosted database.
+`composer check:supabase` performs a real Data API read. Browse `/market`, `/exchange` and `/repair` to exercise public search RPCs. Use distinct customer and technician accounts for authenticated workflow and isolation checks. Configure Auth's site/confirmation redirect URLs for the actual production origin. Auth's SMTP provider is separate from PHPMailer.
 
-The remaining Exchange, Repair, Messaging, Notifications, Reviews and Activity record designs are described in `app/Modules/`. Add their schema, transaction rules and participant RLS together when implementing their workflows.
+Run `npm ci` and `npm run test:database` for local PostgreSQL/PGlite checks, including installer preservation, RLS and representative allowed/denied actions. A single-session harness cannot prove multi-session review aggregate locking.

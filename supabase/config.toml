@@ -66,7 +66,8 @@ max_client_conn = 100
 enabled = true
 # Specifies an ordered list of schema files, directories, or glob patterns that describe your database.
 # Supports paths relative to supabase directory: "./schemas/*.sql", "./database".
-schema_paths = ["./schemas/*.sql"]
+# SwapFix keeps its schema in supabase/migrations only, so no declarative files are used.
+schema_paths = []
 
 [db.seed]
 # If enabled, seeds the database after migrations during a db reset.

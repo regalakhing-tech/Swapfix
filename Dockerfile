@@ -1,7 +1,8 @@
 FROM dunglas/frankenphp:1-php8.4-alpine AS base
 WORKDIR /app
 RUN cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
-    && install-php-extensions curl mbstring
+    && install-php-extensions curl mbstring opcache
+COPY config/php-production.ini "$PHP_INI_DIR/conf.d/zz-swapfix.ini"
 
 FROM base AS dependencies
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer

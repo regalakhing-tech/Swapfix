@@ -7,6 +7,7 @@ final class Icon
 {
     private const PATHS = [
         'arrow' => '<path d="M4 12h16m-6-6 6 6-6 6"/>',
+        'arrow-left' => '<path d="M20 12H4m6 6-6-6 6-6"/>',
         'arrow-up' => '<path d="m6 14 6-6 6 6M12 8v12"/>',
         'arrow-up-right' => '<path d="M6 18 18 6M6 6h12v12"/>',
         'chevron' => '<path d="m8 4 8 8-8 8"/>',
@@ -36,6 +37,20 @@ final class Icon
         'leaf' => '<path d="M20 3C8 1 2 9 6 16s16 3 14-13ZM4 22l12-13"/>',
         'message' => '<path d="M21 11a9 9 0 0 1-9 9H3l1-5a9 9 0 1 1 17-4Z"/><path d="M8 10h8m-8 4h5"/>',
         'info' => '<circle cx="12" cy="12" r="9"/><path d="M12 11v6m0-10h.01"/>',
+        'bell' => '<path d="M6 9a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8Z"/><path d="M10 21h4"/>',
+        'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+        'logout' => '<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>',
+        'plus' => '<path d="M12 5v14M5 12h14"/>',
+        'edit' => '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/>',
+        'trash' => '<path d="M4 7h16M9 7V4h6v3m3 0-1 14H7L6 7m4 4v6m4-6v6"/>',
+        'eye' => '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+        'camera' => '<path d="M3 8a2 2 0 0 1 2-2h3l2-3h4l2 3h3a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z"/><circle cx="12" cy="13" r="4"/>',
+        'star' => '<path d="m12 3 2.8 5.8 6.2.9-4.5 4.4 1 6.3L12 17.5 6.5 20.4l1-6.3L3 9.7l6.2-.9L12 3Z"/>',
+        'send' => '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7Z"/>',
+        'activity' => '<path d="M3 12h4l3 8 4-16 3 8h4"/>',
+        'clipboard' => '<rect x="5" y="4" width="14" height="18" rx="2"/><path d="M9 4a3 3 0 0 1 6 0M9 11h6m-6 4h6"/>',
+        'cash' => '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M6 10v4m12-4v4"/>',
+        'alert' => '<path d="M12 3 2 21h20L12 3Z"/><path d="M12 10v5m0 3h.01"/>',
     ];
 
     public static function render(string $name, string $class = ''): string
