@@ -1,0 +1,10 @@
+/vendor/
+/.env
+/.env.*
+!/.env.example
+/.vercel/
+/.phpunit.cache/
+/.tools/
+*.log
+.DS_Store
+Thumbs.db

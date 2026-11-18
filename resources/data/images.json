@@ -1,0 +1,49 @@
+{
+  "hero-phone": {
+    "width": 1040,
+    "height": 1040,
+    "sources": {
+      "560": "/assets/images/hero-phone-560.cda0e41f58.webp",
+      "1040": "/assets/images/hero-phone-1040.f6a7ad7c56.webp"
+    }
+  },
+  "phone-blue": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/phone-blue-400.fd2fb93b10.webp",
+      "640": "/assets/images/phone-blue-640.ee05081f05.webp"
+    }
+  },
+  "phone-graphite": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/phone-graphite-400.3bad78253e.webp",
+      "640": "/assets/images/phone-graphite-640.de6e7f8aac.webp"
+    }
+  },
+  "tablet": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/tablet-400.ea3e4425a8.webp",
+      "640": "/assets/images/tablet-640.4abcb61d88.webp"
+    }
+  },
+  "laptop": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/laptop-400.df7520985c.webp",
+      "640": "/assets/images/laptop-640.b4021c53a2.webp"
+    }
+  },
+  "logo": {
+    "width": 700,
+    "height": 181,
+    "sources": {
+      "700": "/assets/images/swapfix-logo.17c8a654ae.png"
+    }
+  }
+}

@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+vendor
+.vercel
+.phpunit.cache
+.tools
+node_modules
+tests
+docs
+supabase
+*.log
+originals

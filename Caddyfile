@@ -1,0 +1,14 @@
+{
+    frankenphp
+    auto_https off
+    admin off
+}
+
+:{$PORT:80} {
+    root * /app/public
+    encode zstd gzip
+    header /assets/* Cache-Control "public, max-age=31536000, immutable"
+    @private path /.env* /.git/* /composer.* /app/* /config/* /bootstrap/* /resources/* /routes/* /scripts/* /supabase/* /tests/* /router.php
+    respond @private 404
+    php_server
+}
