@@ -9,6 +9,7 @@ use PHPUnit\Framework\TestCase;
 use Slim\Psr7\Factory\ServerRequestFactory;
 use SwapFix\Application\Application;
 use SwapFix\Application\Container;
+use SwapFix\Http\CsrfTokens;
 
 final class FeatureHttpTest extends TestCase
 {
@@ -27,6 +28,47 @@ final class FeatureHttpTest extends TestCase
     private function request(string $method, string $path): \Psr\Http\Message\ServerRequestInterface
     {
         return (new ServerRequestFactory())->createServerRequest($method, 'https://swapfix.example.test' . $path);
+    }
+
+    public function testVerificationAcceptsLoopbackOriginOnTheActualDevelopmentPort(): void
+    {
+        $config = ['environment' => 'local', 'url' => 'http://127.0.0.1:8000'] + $this->config();
+        $container = new Container($config, $this->services());
+        $seed = str_repeat('a', 64);
+        $token = (new CsrfTokens($container->crypto(), $seed, null))->token();
+        $app = Application::create($config, $this->services());
+        $request = (new ServerRequestFactory())->createServerRequest('POST', 'http://127.0.0.1:8012/verify-email')
+            ->withCookieParams([$container->cookies()->name('csrf') => $seed])
+            ->withHeader('Origin', 'http://127.0.0.1:8012')
+            ->withParsedBody(['_csrf' => $token, 'code' => '000042']);
+        self::assertSame('/login', $app->handle($request)->getHeaderLine('Location'));
+        self::assertSame(403, $app->handle($request->withHeader('Origin', 'https://127.0.0.1:8012'))->getStatusCode());
+    }
+
+    public function testExpiredVerificationFormsOfferAFreshFormWithoutSendingOrVerifying(): void
+    {
+        $container = new Container($this->config(), $this->services());
+        $pending = $container->crypto()->encrypt(['m' => 'person@example.test'], 'pending');
+        $cookies = [$container->cookies()->name('pending') => $pending];
+        $app = $this->app();
+        foreach (['/verify-email', '/verify-email/resend'] as $path) {
+            $request = $this->request('POST', $path)->withCookieParams($cookies)
+                ->withHeader('Origin', 'https://swapfix.example.test')
+                ->withParsedBody(['_csrf' => 'expired-token', 'code' => '000042']);
+            $response = $app->handle($request);
+            self::assertSame(303, $response->getStatusCode());
+            self::assertSame('/verify-email', $response->getHeaderLine('Location'));
+            self::assertStringNotContainsString('swapfix_session', $response->getHeaderLine('Set-Cookie'));
+            self::assertSame(403, $app->handle($request->withHeader('Origin', 'https://other.example.test'))->getStatusCode());
+
+            [$name, $value] = explode('=', explode(';', $response->getHeaderLine('Set-Cookie'), 2)[0], 2);
+            $page = $app->handle($this->request('GET', '/verify-email')->withCookieParams($cookies + [$name => rawurldecode($value)]));
+            self::assertSame(200, $page->getStatusCode());
+            self::assertStringContainsString('Your verification form expired', (string) $page->getBody());
+            self::assertStringContainsString('name="code"', (string) $page->getBody());
+            self::assertStringNotContainsString('000042', (string) $page->getBody());
+            self::assertStringContainsString('__Host-swapfix_csrf=', $page->getHeaderLine('Set-Cookie'));
+        }
     }
 
     public function testSignInRendersSecureCsrfFormAndRejectsCrossOriginWrites(): void

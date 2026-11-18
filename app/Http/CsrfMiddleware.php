@@ -8,6 +8,7 @@ use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Slim\Exception\HttpForbiddenException;
+use Slim\Psr7\Response;
 
 /** Requires a same-origin request and a valid token on every cookie-authenticated write. */
 final class CsrfMiddleware implements MiddlewareInterface
@@ -26,7 +27,17 @@ final class CsrfMiddleware implements MiddlewareInterface
         }
         $body = $request->getParsedBody();
         $token = is_array($body) ? ($body['_csrf'] ?? null) : null;
-        if (!$this->sameOrigin($request) || !$csrf->valid($token)) {
+        if (!$this->sameOrigin($request)) {
+            throw new HttpForbiddenException($request, 'This form expired. Go back, refresh and try again.');
+        }
+        if (!$csrf->valid($token)) {
+            if (in_array($path, ['/verify-email', '/verify-email/resend'], true)) {
+                $flash = $request->getAttribute('flash');
+                if ($flash instanceof Flash) {
+                    $flash->error('Your verification form expired. Please try again.');
+                }
+                return (new Response(303))->withHeader('Location', '/verify-email');
+            }
             throw new HttpForbiddenException($request, 'This form expired. Go back, refresh and try again.');
         }
         return $handler->handle($request);
@@ -43,8 +54,10 @@ final class CsrfMiddleware implements MiddlewareInterface
             return true;
         }
         // Local development may run on another loopback host or port than APP_URL.
-        return !$this->production && $origin !== null && parse_url($origin, PHP_URL_HOST) !== null
-            && strtolower(preg_replace('~^https?://~', '', $origin)) === strtolower($request->getHeaderLine('Host'));
+        $target = $request->getUri();
+        return !$this->production && $origin !== null
+            && in_array($target->getHost(), ['localhost', '127.0.0.1', '[::1]'], true)
+            && $origin === self::origin((string) $target);
     }
 
     private static function origin(string $url): ?string
