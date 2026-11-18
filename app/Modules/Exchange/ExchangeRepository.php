@@ -50,7 +50,9 @@ final class ExchangeRepository
 
     public function conversationForOffer(string $token, string $offerId): ?array
     {
-        return $this->db->first('conversations', ['select' => 'id', 'offer_id' => 'eq.' . $offerId], $token);
+        return $this->db->first('conversations', [
+            'select' => 'id,initiator_id,initiator_unread,recipient_unread', 'offer_id' => 'eq.' . $offerId,
+        ], $token);
     }
 
     public function save(string $token, ?string $id, array $fields, array $photoPaths): array
