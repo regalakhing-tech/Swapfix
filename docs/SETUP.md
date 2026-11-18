@@ -7,7 +7,7 @@ PHP 8.4+, Composer 2, cURL, Fileinfo, Mbstring and OpenSSL are required. Node is
 | Area | Routes |
 | --- | --- |
 | Illustrated homepage | `/` |
-| Accounts | `/register`, `/login`, `/onboarding`, `/account` |
+| Accounts | `/register`, `/verify-email`, `/login`, `/onboarding`, `/account` |
 | Marketplace | `/market`, `/market/new`, `/market/{id}` |
 | Exchanges | `/exchange`, `/exchange/new`, `/exchange/{id}`, `/offers/{id}` |
 | Repairs | `/repair`, `/technicians/{id}`, `/repair/request/{id}`, `/repairs` |
@@ -32,7 +32,9 @@ PHPMailer supports encrypted SMTP and HTML/plain-text messages. Set the SMTP and
 
 Optional notification email needs SMTP, a server-only `SUPABASE_SECRET_KEY` and `CRON_SECRET`. The worker endpoint is `/internal/mail/dispatch`; schedule it only after configuration. It sends queued notifications to opted-in participants. Its template is `resources/views/emails/notification.php`.
 
-Supabase Auth confirmation emails have a separate mail configuration. Set Auth's production site URL and allow the canonical `/login?confirmed=1` redirect. Keep email confirmation enabled. See [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+Supabase Auth sends signup codes through its own SMTP settings. In the hosted project's Auth settings, enable email confirmation and set the email OTP length to six. Install [the SwapFix confirmation template](../supabase/templates/confirmation.html) with the subject **Your SwapFix verification code**. The `{{ .Token }}` placeholder supplies the code. Configure [custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp) so Auth can deliver to users outside the project team. Set the production Site URL and keep `/login?confirmed=1` in the redirect allowlist for earlier confirmation links.
+
+The local Supabase stack uses the same confirmation template and captures mail in Mailpit. After submitting the signup form, enter the code from the message. The verification page also lets users resend the email. An unverified user can return to this page by entering their account credentials on Sign In.
 
 The explicit command `php scripts/mail-test.php your-test-address@example.com` sends a real test email. SMTP acceptance and inbox delivery are separate checks. Automated tests never send email.
 

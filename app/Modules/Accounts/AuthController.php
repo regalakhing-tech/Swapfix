@@ -13,6 +13,8 @@ use SwapFix\Support\IntegrationException;
 final class AuthController extends Controller
 {
     private const PENDING = 'pending';
+    private const PENDING_MAX_AGE = 604800;
+    private const VERIFY_PATH = '/verify-email';
     private const AUTH_ERRORS = [
         'invalid_credentials' => 'Email or password is incorrect.',
         'email_not_confirmed' => 'Confirm your email first, then sign in.',
@@ -23,6 +25,8 @@ final class AuthController extends Controller
         'signup_disabled' => 'New accounts are not open right now.',
         'over_request_rate_limit' => 'Too many attempts. Wait a moment and try again.',
         'over_email_send_rate_limit' => 'Too many emails were sent. Wait a moment and try again.',
+        'email_address_not_authorized' => 'Email delivery is unavailable for this address. Try again later.',
+        'otp_expired' => 'That code is incorrect or has expired. Check the code or request a new one.',
     ];
 
     public function showLogin(Request $request, Response $response): Response
@@ -43,6 +47,13 @@ final class AuthController extends Controller
         } catch (\InvalidArgumentException) {
             return $this->loginPage($request, $response, $next, 'Enter your email and password.', $email, 422);
         } catch (IntegrationException $exception) {
+            if ($exception->errorCode === 'email_not_confirmed') {
+                $pending = $this->pendingSignup($request);
+                $normalized = mb_strtolower($email);
+                $pending = ($pending['m'] ?? '') === $normalized ? $pending : ['m' => $normalized];
+                $pending['next'] = $this->safeNext($next);
+                return $this->beginVerification($response, $pending);
+            }
             return $this->loginPage($request, $response, $next, $this->authMessage($exception), $email, 422);
         }
         return $this->startSession($request, $response, $tokens, $this->safeNext($next));
@@ -77,7 +88,7 @@ final class AuthController extends Controller
             return $this->page($request, $response, 'auth/register', ['old' => $old, 'error' => $error], 422, 'auth');
         }
         try {
-            $result = $this->app->auth()->signUp($old['email'], $password, $this->app->config['url'] . '/login?confirmed=1');
+            $result = $this->app->auth()->signUp($old['email'], $password, $this->confirmationRedirect());
         } catch (IntegrationException $exception) {
             return $this->page($request, $response, 'auth/register', ['old' => $old, 'error' => $this->authMessage($exception)], 422, 'auth');
         }
@@ -85,9 +96,56 @@ final class AuthController extends Controller
         if (is_string($result['access_token'] ?? null)) {
             return $this->startSession($request, $response, $result, '/market', $pending);
         }
-        // Email confirmation is on: remember the choices until the first sign-in on this browser.
-        $cookie = $this->app->cookies()->set(self::PENDING, $this->app->crypto()->encrypt($pending, self::PENDING), 604800);
-        return $this->page($request, $response->withAddedHeader('Set-Cookie', $cookie), 'auth/check-email', ['email' => $old['email']], layout: 'auth');
+        return $this->beginVerification($response, $pending);
+    }
+
+    public function showVerification(Request $request, Response $response): Response
+    {
+        if ($this->session($request)) {
+            return $this->redirect($response, '/market');
+        }
+        $pending = $this->pendingSignup($request);
+        return $pending === null ? $this->redirect($response, '/login') : $this->verificationPage($request, $response, $pending);
+    }
+
+    public function verifyEmail(Request $request, Response $response): Response
+    {
+        if ($this->session($request)) {
+            return $this->redirect($response, '/market');
+        }
+        $pending = $this->pendingSignup($request);
+        if ($pending === null) {
+            return $this->redirect($response, '/login');
+        }
+        $code = Input::body($request)->all()['code'] ?? '';
+        $code = is_string($code) ? trim($code) : '';
+        if (!preg_match('/\A[0-9]{6}\z/', $code)) {
+            return $this->verificationPage($request, $response, $pending, 'Enter the six-digit code from your email.', 422);
+        }
+        try {
+            $tokens = $this->app->auth()->verifySignup($pending['m'], $code);
+        } catch (IntegrationException $exception) {
+            return $this->verificationPage($request, $response, $pending, $this->authMessage($exception), 422);
+        }
+        return $this->startSession($request, $response, $tokens, $this->safeNext($pending['next'] ?? ''), $pending);
+    }
+
+    public function resendVerification(Request $request, Response $response): Response
+    {
+        if ($this->session($request)) {
+            return $this->redirect($response, '/market');
+        }
+        $pending = $this->pendingSignup($request);
+        if ($pending === null) {
+            return $this->redirect($response, '/login');
+        }
+        try {
+            $this->app->auth()->resendSignup($pending['m'], $this->confirmationRedirect());
+        } catch (IntegrationException $exception) {
+            return $this->verificationPage($request, $response, $pending, $this->authMessage($exception), 422);
+        }
+        $this->flash($request)->success('If verification is still pending, a new email is on its way.');
+        return $this->redirect($response, self::VERIFY_PATH);
     }
 
     public function showOnboarding(Request $request, Response $response): Response
@@ -137,6 +195,29 @@ final class AuthController extends Controller
         ], $status, 'auth');
     }
 
+    private function pendingSignup(Request $request): ?array
+    {
+        $cookie = $request->getCookieParams()[$this->app->cookies()->name(self::PENDING)] ?? null;
+        $pending = is_string($cookie) ? $this->app->crypto()->decrypt($cookie, self::PENDING) : null;
+        return is_string($pending['m'] ?? null) && filter_var($pending['m'], FILTER_VALIDATE_EMAIL) ? $pending : null;
+    }
+
+    private function beginVerification(Response $response, array $pending): Response
+    {
+        $cookie = $this->app->cookies()->set(self::PENDING, $this->app->crypto()->encrypt($pending, self::PENDING), self::PENDING_MAX_AGE);
+        return $this->redirect($response->withAddedHeader('Set-Cookie', $cookie), self::VERIFY_PATH);
+    }
+
+    private function verificationPage(Request $request, Response $response, array $pending, ?string $error = null, int $status = 200): Response
+    {
+        return $this->page($request, $response, 'auth/check-email', ['email' => $pending['m'], 'error' => $error], $status, 'auth');
+    }
+
+    private function confirmationRedirect(): string
+    {
+        return $this->app->config['url'] . '/login?confirmed=1';
+    }
+
     private function startSession(Request $request, Response $response, array $tokens, string $next, ?array $pending = null): Response
     {
         $session = $this->app->sessions()->sessionFor($tokens);
@@ -146,9 +227,8 @@ final class AuthController extends Controller
             $this->flash($request)->success('Welcome back, ' . $session->name() . '.');
             return $this->redirect($response, $next);
         }
-        $cookie = $request->getCookieParams()[$this->app->cookies()->name(self::PENDING)] ?? null;
-        $pending ??= is_string($cookie) ? $this->app->crypto()->decrypt($cookie, self::PENDING) : null;
-        if (!is_array($pending) || !is_string($pending['m'] ?? null)
+        $pending ??= $this->pendingSignup($request);
+        if (!isset($pending['t'], $pending['n'], $pending['l'], $pending['m'])
             || $session->email === '' || !hash_equals(mb_strtolower($session->email), $pending['m'])) {
             return $this->redirect($response, '/onboarding');
         }
@@ -158,18 +238,16 @@ final class AuthController extends Controller
             return $this->redirect($response, '/onboarding');
         }
         $this->flash($request)->success('Welcome to SwapFix.');
-        return $this->redirect($response->withAddedHeader('Set-Cookie', $this->app->cookies()->clear(self::PENDING)), ($pending['t'] ?? '') === 'technician' ? '/technician/profile' : $next);
+        return $this->redirect($response, $pending['t'] === 'technician' ? '/technician/profile' : $next);
     }
 
     private function authMessage(IntegrationException $exception): string
     {
-        if ($exception->upstreamStatus === 429) {
-            return self::AUTH_ERRORS['over_request_rate_limit'];
-        }
-        if ($exception->upstreamStatus >= 500 || $exception->upstreamStatus === 503) {
-            return 'Sign-in is temporarily unavailable. Try again shortly.';
-        }
-        return self::AUTH_ERRORS[$exception->errorCode ?? ''] ?? 'Those details were not accepted.';
+        return self::AUTH_ERRORS[$exception->errorCode ?? ''] ?? match (true) {
+            $exception->upstreamStatus === 429 => self::AUTH_ERRORS['over_request_rate_limit'],
+            $exception->upstreamStatus >= 500 => 'The account service is temporarily unavailable. Try again shortly.',
+            default => 'Those details were not accepted.',
+        };
     }
 
     /** Only same-site paths are allowed, so sign-in cannot redirect elsewhere. */

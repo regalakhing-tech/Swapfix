@@ -37,6 +37,21 @@ final class Auth
         return $this->client->request('POST', '/auth/v1/token?grant_type=password', ['json' => ['email' => $email, 'password' => $password]]);
     }
 
+    public function verifySignup(string $email, string $code): array
+    {
+        return $this->client->request('POST', '/auth/v1/verify', [
+            'json' => ['email' => $email, 'token' => $code, 'type' => 'signup'],
+        ]);
+    }
+
+    public function resendSignup(string $email, string $redirectTo): void
+    {
+        $this->client->request('POST', '/auth/v1/resend', [
+            'json' => ['email' => $email, 'type' => 'signup'],
+            'query' => ['redirect_to' => $redirectTo],
+        ]);
+    }
+
     public function refresh(string $refreshToken): array
     {
         if ($refreshToken === '') {

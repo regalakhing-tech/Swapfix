@@ -39,6 +39,9 @@ return static function (App $app, Container $container): void {
         $live->post('/login', $auth->login(...));
         $live->get('/register', $auth->showRegister(...));
         $live->post('/register', $auth->register(...));
+        $live->get('/verify-email', $auth->showVerification(...));
+        $live->post('/verify-email', $auth->verifyEmail(...));
+        $live->post('/verify-email/resend', $auth->resendVerification(...));
         $live->post('/logout', $auth->logout(...));
 
         $live->group('', function (Group $signedIn) use ($auth): void {

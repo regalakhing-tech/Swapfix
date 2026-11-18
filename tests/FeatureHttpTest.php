@@ -60,6 +60,78 @@ final class FeatureHttpTest extends TestCase
         self::assertSame('/login?next=%2Fmarket%2Fnew', $response->getHeaderLine('Location'));
     }
 
+    public function testSignupCodeResendsAndVerifiesBeforeCreatingProfile(): void
+    {
+        $email = 'new-user@example.test';
+        $userId = '00000000-0000-4000-8000-000000000003';
+        $app = $this->app([
+            new Upstream(200, [], json_encode(['id' => $userId, 'email' => $email])),
+            static function ($request) use ($email): Upstream {
+                self::assertSame('/auth/v1/resend', $request->getUri()->getPath());
+                $body = json_decode((string) $request->getBody(), true);
+                self::assertSame('signup', $body['type']);
+                self::assertSame($email, $body['email']);
+                return new Upstream(200, [], '{}');
+            },
+            new Upstream(403, [], '{"error_code":"otp_expired","message":"Upstream details"}'),
+            static function ($request) use ($email): Upstream {
+                self::assertSame('/auth/v1/verify', $request->getUri()->getPath());
+                self::assertSame(['email' => $email, 'token' => '000042', 'type' => 'signup'], json_decode((string) $request->getBody(), true));
+                return new Upstream(200, [], json_encode([
+                    'access_token' => 'test-access', 'refresh_token' => 'test-refresh',
+                    'user' => ['email' => $email],
+                ]));
+            },
+            new Upstream(200, [], json_encode(['user_id' => $userId, 'profile' => null])),
+            static function ($request): Upstream {
+                self::assertSame('/rest/v1/rpc/sf_create_profile', $request->getUri()->getPath());
+                self::assertSame(['p_account_type' => 'technician', 'p_display_name' => 'Test Tech', 'p_location' => 'Manila'], json_decode((string) $request->getBody(), true));
+                return new Upstream(200, [], '{}');
+            },
+        ]);
+
+        $cookies = [];
+        $saveCookies = static function ($response) use (&$cookies): void {
+            foreach ($response->getHeader('Set-Cookie') as $cookie) {
+                [$name, $value] = explode('=', explode(';', $cookie, 2)[0], 2);
+                $cookies[$name] = rawurldecode($value);
+            }
+        };
+        $register = $app->handle($this->request('GET', '/register'));
+        $saveCookies($register);
+        preg_match('/name="_csrf" value="([^"]+)"/', (string) $register->getBody(), $match);
+        self::assertNotEmpty($match[1]);
+        $post = function (string $path, array $fields = []) use ($app, &$cookies, $match) {
+            return $app->handle($this->request('POST', $path)
+                ->withCookieParams($cookies)->withHeader('Origin', 'https://swapfix.example.test')
+                ->withParsedBody($fields + ['_csrf' => $match[1]]));
+        };
+        $signedUp = $post('/register', ['account_type' => 'technician', 'display_name' => 'Test Tech', 'location' => 'Manila', 'email' => $email, 'password' => 'test-password']);
+        self::assertSame('/verify-email', $signedUp->getHeaderLine('Location'));
+        self::assertStringNotContainsString('__Host-swapfix_session=', $signedUp->getHeaderLine('Set-Cookie'));
+        $saveCookies($signedUp);
+        $screen = $app->handle($this->request('GET', '/verify-email')->withCookieParams($cookies));
+        self::assertSame(200, $screen->getStatusCode());
+        self::assertSame('no-store', $screen->getHeaderLine('Cache-Control'));
+        self::assertStringContainsString('autocomplete="one-time-code"', (string) $screen->getBody());
+
+        self::assertSame('/verify-email', $post('/verify-email/resend')->getHeaderLine('Location'));
+        $invalid = $post('/verify-email', ['code' => '0000427']);
+        self::assertSame(422, $invalid->getStatusCode());
+        self::assertStringContainsString('Enter the six-digit code', (string) $invalid->getBody());
+        $expired = $post('/verify-email', ['code' => '111111']);
+        self::assertSame(422, $expired->getStatusCode());
+        self::assertStringContainsString('expired', (string) $expired->getBody());
+        self::assertStringNotContainsString('Upstream details', (string) $expired->getBody());
+
+        // The email in the encrypted pending signup is authoritative.
+        $verified = $post('/verify-email', ['code' => '000042', 'email' => 'other@example.test']);
+        self::assertSame('/technician/profile', $verified->getHeaderLine('Location'));
+        $saveCookies($verified);
+        self::assertNotEmpty($cookies['__Host-swapfix_session']);
+        self::assertSame('', $cookies['__Host-swapfix_pending']);
+    }
+
     public function testPublicMarketplaceShowsRealEmptyStateWithoutSampleRecords(): void
     {
         $response = $this->app([new Upstream(200, [], '{"items":[],"total":0}')])->handle($this->request('GET', '/market'));

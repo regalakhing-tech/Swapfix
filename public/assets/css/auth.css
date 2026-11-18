@@ -67,6 +67,13 @@
 .auth-form-content .choice-card small { margin-top: 3px; font-size: 11px; line-height: 1.4; }
 .auth-form-content .field-hint { margin-top: -8px; font-size: 12px; }
 
+.auth-code-form input[name="code"] { letter-spacing: .3em; font-variant-numeric: tabular-nums; }
+.auth-code-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px; }
+.auth-code-actions .button { min-height: 44px; }
+.auth-code-actions a, .auth-code-help a { color: var(--primary); text-decoration: underline; }
+.auth-code-actions a { display: inline-flex; align-items: center; min-height: 44px; font-size: 13px; }
+.auth-code-help { margin-top: 14px; color: var(--auth-muted); font-size: 13px; line-height: 1.5; }
+
 .auth-visual-panel {
     display: grid;
     justify-items: center;
