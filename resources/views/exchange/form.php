@@ -3,7 +3,6 @@ use SwapFix\Support\Labels;
 
 $editing = $exchange !== null;
 echo $ui->heading('swap', $editing ? 'Edit exchange' : 'New exchange', $editing ? $exchange['title'] : 'Offer a gadget and say what you want', $ui->link($editing ? '/exchange/' . $exchange['id'] : '/exchange', 'Back', 'arrow-left', 'button button-outline'));
-$remaining = 8 - count($old['photo_paths'] ?? []);
 ?>
 <form method="post" action="<?= $editing ? '/exchange/' . $e($exchange['id']) : '/exchange' ?>" enctype="multipart/form-data" class="card form-card">
     <?= $ui->csrf() ?>
@@ -19,7 +18,7 @@ $remaining = 8 - count($old['photo_paths'] ?? []);
         <?= $ui->textarea('description', 'Description', $old['description'], ['maxlength' => 4000, 'data-wide' => true]) ?>
         <?= $ui->textarea('known_defects', 'Known defects', $old['known_defects'], ['maxlength' => 2000, 'data-wide' => true]) ?>
         <?php require __DIR__ . '/../partials/keep-photos.php' ?>
-        <?php if ($remaining > 0): ?><?= $ui->photoInput('photos', 'Add photos', $remaining) ?><?php endif ?>
+        <?= $ui->photoInput('photos', 'Add photos', 8) ?>
     </div>
     <h2 class="section-title"><?= $ui->icon('swap') ?>What you want</h2>
     <div class="form-grid">

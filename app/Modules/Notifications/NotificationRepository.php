@@ -7,12 +7,15 @@ use SwapFix\Integrations\Supabase\Database;
 
 final class NotificationRepository
 {
+    public const PAGE_SIZE = 100;
+
     public function __construct(private readonly Database $db) {}
 
-    public function recent(string $token, int $limit = 100): array
+    public function recent(string $token, int $limit = self::PAGE_SIZE, int $offset = 0): array
     {
         return $this->db->select('notifications', [
-            'select' => 'id,kind,title,body,link_path,read_at,created_at', 'order' => 'created_at.desc', 'limit' => $limit,
+            'select' => 'id,kind,title,body,link_path,read_at,created_at',
+            'order' => 'created_at.desc,id.desc', 'limit' => $limit, 'offset' => $offset,
         ], $token);
     }
 

@@ -1,5 +1,4 @@
 <?php
-echo $ui->heading('settings', 'Services', count($services) . ' published or hidden', $ui->dialogLink('service-dialog', 'add', 'Add service', 'plus'));
 $form = $old ?? ['id' => null, 'name' => '', 'description' => '', 'supported_brands' => [], 'supported_models' => [], 'estimated_price' => ''];
 $editId = $ui->query['edit'] ?? null;
 foreach ($services as $service) {
@@ -9,10 +8,13 @@ foreach ($services as $service) {
 }
 $dialogParam = !empty($form['id']) ? 'edit' : 'add';
 $list = static fn (array $items): string => implode(', ', $items);
+$addLink = $dialogParam === 'edit'
+    ? $ui->link('/technician/services?add=1', 'Add service', 'plus')
+    : $ui->dialogLink('service-dialog', 'add', 'Add service', 'plus');
+echo $ui->heading('settings', 'Services', count($services) . ' published or hidden', $addLink);
 ?>
-<?= $ui->alert($formError ?? null) ?>
 <?php if ($services === []): ?>
-    <?= $ui->emptyState('settings', 'Publish your first service.', $ui->dialogLink('service-dialog', 'add', 'Add service', 'plus')) ?>
+    <?= $ui->emptyState('settings', 'Publish your first service.', $addLink) ?>
 <?php else: ?>
     <div class="row-list card">
         <?php foreach ($services as $service): ?>
@@ -28,8 +30,9 @@ $list = static fn (array $items): string => implode(', ', $items);
     </div>
 <?php endif ?>
 <?= $ui->dialogStart('service-dialog', !empty($form['id']) ? 'Edit service' : 'Add service', $dialogParam) ?>
-<form method="post" action="/technician/services<?= !empty($form['id']) ? '/' . $e($form['id']) : '' ?>" class="stack-form">
+<form method="post" action="/technician/services" class="stack-form">
     <?= $ui->csrf() ?>
+    <?php if ($form['id'] !== null): ?><input type="hidden" name="service_id" value="<?= $e($form['id']) ?>"><?php endif ?>
     <?= $ui->alert($formError ?? null) ?>
     <?= $ui->input('name', 'Service name', $form['name'], ['required' => true, 'minlength' => 3, 'maxlength' => 120, 'placeholder' => 'Screen replacement']) ?>
     <?= $ui->input('estimated_price', 'Estimated price (PHP)', $form['estimated_price'], ['required' => true, 'inputmode' => 'decimal']) ?>

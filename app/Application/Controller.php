@@ -61,6 +61,20 @@ abstract class Controller
         return $record ?? throw new HttpNotFoundException($request);
     }
 
+    protected function markConversationRead(Request $request, ?array $conversation): Request
+    {
+        if ($request->getMethod() !== 'GET' || $conversation === null) {
+            return $request;
+        }
+        $user = $this->user($request);
+        $unread = $conversation['initiator_id'] === $user->id ? $conversation['initiator_unread'] : $conversation['recipient_unread'];
+        if ($unread > 0) {
+            $this->app->messages()->markRead($user->accessToken, $conversation['id']);
+            return $request->withAttribute('session', $this->app->sessions()->reload($user));
+        }
+        return $request;
+    }
+
     /**
      * Runs a state change, reports it with a toast and always redirects (POST, redirect, GET).
      * Business rejections go back to $failureTo so the user keeps their place.

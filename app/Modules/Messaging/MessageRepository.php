@@ -11,9 +11,12 @@ final class MessageRepository
 
     public function __construct(private readonly Database $db) {}
 
-    public function conversations(string $token, int $limit = 100): array
+    public function conversations(string $token, int $limit = 100, int $offset = 0): array
     {
-        return $this->db->select('conversations', ['select' => '*,' . self::PEOPLE, 'order' => 'last_message_at.desc.nullslast,created_at.desc', 'limit' => $limit], $token);
+        return $this->db->select('conversations', [
+            'select' => '*,' . self::PEOPLE, 'order' => 'last_message_at.desc.nullslast,created_at.desc,id.desc',
+            'limit' => $limit, 'offset' => $offset,
+        ], $token);
     }
 
     public function conversation(string $token, string $id): ?array

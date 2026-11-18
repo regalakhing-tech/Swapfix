@@ -1,16 +1,5 @@
 # Reviews Module
 
-Status: module specification. Review records and endpoints are not implemented in this starter.
+Customers can rate a completed repair from `/repairs/{id}` using one to five stars and an optional comment. The private repair page submits to `POST /repairs/{id}/review`. The database checks that the signed-in customer owns the request, the assigned technician completed it, and a review does not already exist.
 
-## README Features
-
-- Customer ratings and written feedback after a completed repair.
-- Public reviews on the relevant technician profile.
-
-Pages: review form in `/repairs/{id}` and review history on `/technicians/{id}`.
-
-API routes to implement: `POST /api/repairs/{id}/review`, `GET /api/technicians/{id}/reviews`.
-
-Add a `reviews` table linked to a completed repair, its customer and assigned technician, with rating, feedback and submission timestamp. Decide and document the rating scale before implementing validation. Enforce one review per repair and verify completion and customer identity in the database write path. A technician acting as a customer may review another technician, but cannot review their own service.
-
-Expose the review and intentionally public reviewer display fields only. Never join private account details into public profile responses. Compute technician aggregates from eligible reviews.
+Public technician profiles at `/technicians/{id}` show the aggregate rating and the latest written feedback. Public review data includes the customer's display name, rating, comment, and submission date.

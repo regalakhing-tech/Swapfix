@@ -1,5 +1,5 @@
 <?php
-$unread = count(array_filter($notifications, static fn (array $item): bool => $item['read_at'] === null));
+$unread = $ui->session->unreadNotifications;
 $icons = ['message' => 'message', 'repair_request' => 'wrench', 'repair_status' => 'wrench', 'review' => 'star'];
 $iconFor = static fn (string $kind): string => $icons[$kind] ?? (str_starts_with($kind, 'trade') ? 'swap' : 'cash');
 echo $ui->heading('bell', 'Notifications', $unread . ' unread', $unread > 0 ? $ui->postButton('/notifications/read-all', 'Mark all read', 'check') : '');
@@ -19,4 +19,10 @@ echo $ui->heading('bell', 'Notifications', $unread . ' unread', $unread > 0 ? $u
             </form>
         <?php endforeach ?>
     </div>
+<?php endif ?>
+<?php if ($pageNumber > 1 || $hasOlder): ?>
+    <nav class="pagination" aria-label="Notification pages">
+        <?php if ($pageNumber > 1): ?><?= $ui->link($ui->url(['page' => $pageNumber > 2 ? $pageNumber - 1 : null]), 'Newer', 'arrow-left', 'button button-outline') ?><?php endif ?>
+        <?php if ($hasOlder): ?><?= $ui->link($ui->url(['page' => $pageNumber + 1]), 'Older', 'arrow', 'button button-outline') ?><?php endif ?>
+    </nav>
 <?php endif ?>

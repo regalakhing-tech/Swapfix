@@ -21,13 +21,15 @@ final class AccountController extends Controller
         $user = $this->user($request);
         $input = Input::body($request);
         $uploads = $this->app->uploads($user);
-        $old = ['display_name' => $input->text('display_name', 80), 'location' => $input->text('location', 120), 'email_notifications' => $input->flag('email_notifications')] + ($user->profile ?? []);
+        $mailAvailable = $this->app->mailDispatcher() !== null;
+        $emailNotifications = $mailAvailable ? $input->flag('email_notifications') : (bool) ($user->profile['email_notifications'] ?? false);
+        $old = ['display_name' => $input->text('display_name', 80), 'location' => $input->text('location', 120), 'email_notifications' => $emailNotifications] + ($user->profile ?? []);
         try {
             $avatar = $uploads->take($request, 'avatar', 'avatars', 1)[0] ?? null;
-            $result = $this->app->accounts()->updateProfile($user->accessToken, $old['display_name'], $old['location'], $avatar, $avatar === null && $input->flag('remove_avatar'), $input->flag('email_notifications'));
+            $result = $this->app->accounts()->updateProfile($user->accessToken, $old['display_name'], $old['location'], $avatar, $avatar === null && $input->flag('remove_avatar'), $emailNotifications);
         } catch (DomainError $error) {
             $uploads->discard();
-            return $this->page($request, $response, 'account/profile', ['old' => $old, 'error' => $error->getMessage(), 'mailAvailable' => $this->app->mailDispatcher() !== null], 422);
+            return $this->page($request, $response, 'account/profile', ['old' => $old, 'error' => $error->getMessage(), 'mailAvailable' => $mailAvailable], 422);
         } catch (\Throwable $exception) {
             $uploads->discard();
             throw $exception;

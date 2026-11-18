@@ -202,6 +202,65 @@ final class FeatureHttpTest extends TestCase
         self::assertStringContainsString('Sign in to inquire', $html);
     }
 
+    public function testActivityShowsAnOfferOnHoldWhileAnotherOfferIsAgreed(): void
+    {
+        $owner = '00000000-0000-4000-8000-000000000001';
+        $pending = [
+            'owner_id' => $owner, 'offerer_id' => '00000000-0000-4000-8000-000000000002',
+            'status' => 'pending', 'awaiting_user_id' => $owner, 'current_version' => 1,
+            'updated_at' => '2026-11-18T18:00:00Z',
+        ];
+        $offers = [
+            ['id' => '00000000-0000-4000-8000-000000000003', 'exchange' => ['title' => 'Open trade', 'status' => 'open']] + $pending,
+            ['id' => '00000000-0000-4000-8000-000000000004', 'exchange' => ['title' => 'Agreed trade', 'status' => 'agreed']] + $pending,
+        ];
+        $response = $this->app([$this->memberSession($owner), new Upstream(200, [], json_encode($offers))])
+            ->handle($this->memberRequest('/activity?tab=offers')->withQueryParams(['tab' => 'offers']));
+
+        self::assertSame(200, $response->getStatusCode());
+        $html = (string) $response->getBody();
+        self::assertMatchesRegularExpression('~<strong>Open trade</strong>[^\n]*>Your turn</span>~', $html);
+        self::assertMatchesRegularExpression('~<strong>Agreed trade</strong>[^\n]*>On hold</span>~', $html);
+    }
+
+    public function testListingEditorsAllowPhotoReplacementAtCapacity(): void
+    {
+        $owner = '00000000-0000-4000-8000-000000000001';
+        $id = '00000000-0000-4000-8000-000000000002';
+        $listing = [
+            'id' => $id, 'owner_id' => $owner, 'title' => 'iPhone 13', 'description' => 'In good condition',
+            'category' => 'cellphone', 'brand' => 'Apple', 'model' => '13', 'condition' => 'good',
+            'known_defects' => '', 'location' => 'Manila', 'price' => '18500.00', 'wanted_item' => 'Pixel',
+            'wanted_details' => '', 'cash_preference' => 'none',
+            'photo_paths' => array_map(static fn (int $photo): string => $owner . '/' . sprintf('%032x', $photo) . '.jpg', range(1, 8)),
+        ];
+        foreach (['market', 'exchange'] as $section) {
+            $response = $this->app([$this->memberSession($owner), new Upstream(200, [], json_encode([$listing]))])
+                ->handle($this->memberRequest('/' . $section . '/' . $id . '/edit'));
+
+            self::assertSame(200, $response->getStatusCode(), $section);
+            $html = (string) $response->getBody();
+            self::assertSame(8, substr_count($html, 'name="keep_photos[]"'), $section);
+            self::assertStringContainsString('name="photos[]"', $html, $section);
+        }
+    }
+
+    private function memberSession(string $userId): Upstream
+    {
+        return new Upstream(200, [], json_encode([
+            'user_id' => $userId,
+            'profile' => ['id' => $userId, 'display_name' => 'Customer', 'avatar_path' => null, 'account_type' => 'customer'],
+        ]));
+    }
+
+    private function memberRequest(string $path): \Psr\Http\Message\ServerRequestInterface
+    {
+        $container = new Container($this->config(), $this->services());
+        $cookie = $container->sessions()->issue(['access_token' => 'test-access', 'refresh_token' => 'test-refresh', 'expires_in' => 3600]);
+        [$name, $value] = explode('=', explode(';', $cookie, 2)[0], 2);
+        return $this->request('GET', $path)->withCookieParams([$name => rawurldecode($value)]);
+    }
+
     public function testCustomerCannotUseTechnicianDashboard(): void
     {
         $container = new Container($this->config(), $this->services());

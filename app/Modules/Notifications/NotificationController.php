@@ -6,13 +6,22 @@ namespace SwapFix\Modules\Notifications;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use SwapFix\Application\Controller;
+use SwapFix\Http\Input;
 use SwapFix\Support\DomainError;
 
 final class NotificationController extends Controller
 {
     public function index(Request $request, Response $response): Response
     {
-        return $this->page($request, $response, 'notifications/index', ['notifications' => $this->app->notifications()->recent($this->user($request)->accessToken)]);
+        $user = $this->user($request);
+        $size = NotificationRepository::PAGE_SIZE;
+        $page = Input::query($request)->int('page', 1, 1, intdiv(PHP_INT_MAX, $size));
+        $notifications = $this->app->notifications()->recent($user->accessToken, $size + 1, ($page - 1) * $size);
+        return $this->page($request, $response, 'notifications/index', [
+            'notifications' => array_slice($notifications, 0, $size),
+            'pageNumber' => $page,
+            'hasOlder' => count($notifications) > $size,
+        ]);
     }
 
     public function open(Request $request, Response $response, array $args): Response

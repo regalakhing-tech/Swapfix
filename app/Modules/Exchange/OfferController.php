@@ -18,6 +18,7 @@ final class OfferController extends Controller
         $offer = $this->found($request, $this->app->exchanges()->offer($user->accessToken, $id));
         $paths = array_merge(...array_map(static fn (array $terms): array => $terms['photo_paths'], $offer['terms'] ?: [['photo_paths' => []]]));
         $conversation = $this->app->exchanges()->conversationForOffer($user->accessToken, $id);
+        $request = $this->markConversationRead($request, $conversation);
         return $this->page($request, $response, 'exchange/offer', $extra + [
             'offer' => $offer,
             'exchange' => $offer['exchange'],

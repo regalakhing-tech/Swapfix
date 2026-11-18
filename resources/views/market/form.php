@@ -3,7 +3,6 @@ use SwapFix\Support\Labels;
 
 $editing = $listing !== null;
 echo $ui->heading('bag', $editing ? 'Edit listing' : 'New listing', $editing ? $listing['title'] : 'Gadgets, accessories and spare parts', $ui->link($editing ? '/market/' . $listing['id'] : '/market', 'Back', 'arrow-left', 'button button-outline'));
-$remaining = 8 - count($old['photo_paths'] ?? []);
 ?>
 <form method="post" action="<?= $editing ? '/market/' . $e($listing['id']) : '/market' ?>" enctype="multipart/form-data" class="card form-card">
     <?= $ui->csrf() ?>
@@ -19,7 +18,7 @@ $remaining = 8 - count($old['photo_paths'] ?? []);
         <?= $ui->textarea('description', 'Description', $old['description'], ['required' => true, 'maxlength' => 4000, 'data-wide' => true], 'What is included and how it works.') ?>
         <?= $ui->textarea('known_defects', 'Known defects', $old['known_defects'], ['maxlength' => 2000, 'data-wide' => true], 'Faults, damage or missing parts. Buyers see this before they inquire.') ?>
         <?php require __DIR__ . '/../partials/keep-photos.php' ?>
-        <?php if ($remaining > 0): ?><?= $ui->photoInput('photos', 'Add photos', $remaining) ?><?php endif ?>
+        <?= $ui->photoInput('photos', 'Add photos', 8) ?>
     </div>
     <div class="form-actions"><button class="button button-primary" type="submit"><?= $ui->icon('check') ?><?= $editing ? 'Save changes' : 'Publish listing' ?></button></div>
 </form>

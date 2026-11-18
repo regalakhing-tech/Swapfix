@@ -24,7 +24,7 @@ final class RepairRepository
     public function find(string $token, string $id): ?array
     {
         $repair = $this->db->first('repair_requests', [
-            'select' => '*,' . self::PEOPLE . ',repair_quotations!repair_quotations_repair_id_fkey(*),repair_added_costs(*),repair_events(*),reviews(*),conversations(id)',
+            'select' => '*,' . self::PEOPLE . ',repair_quotations!repair_quotations_repair_id_fkey(*),repair_added_costs(*),repair_events(*),reviews(*),conversations(id,initiator_id,initiator_unread,recipient_unread)',
             'id' => 'eq.' . $id,
         ], $token);
         if ($repair === null) {
@@ -51,6 +51,15 @@ final class RepairRepository
         return $this->db->select('repair_requests', [
             'select' => '*,' . self::PEOPLE . ',repair_added_costs(id,status)', 'technician_id' => 'eq.' . $userId,
             'order' => 'updated_at.desc', 'limit' => $limit,
+        ], $token);
+    }
+
+    public function forParticipant(string $token, string $userId, int $limit, int $offset): array
+    {
+        return $this->db->select('repair_requests', [
+            'select' => 'id,technician_id,device_brand,device_model,status,updated_at,' . self::PEOPLE,
+            'or' => "(customer_id.eq.$userId,technician_id.eq.$userId)",
+            'order' => 'updated_at.desc,id.desc', 'limit' => $limit, 'offset' => $offset,
         ], $token);
     }
 

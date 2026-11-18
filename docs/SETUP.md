@@ -47,12 +47,22 @@ composer lint
 composer test
 composer check:supabase
 npm ci
+npm audit
 npm run test:database
 # With composer dev running:
 npm run test:ui
+npx playwright install chromium
+npm run test:browser
 ```
 
-PHP tests cover routing, escaping, account guards, session-cookie precedence, CSRF, integration adapters and mail construction. PGlite executes the actual migrations with local Auth/Storage stubs to test permissions, approvals, state transitions and records. It is not a hosted integration test or a multi-session concurrency test. DOM checks exercise the shipped scripts without browser automation or visual/Core Web Vitals measurements.
+| Suite | Coverage |
+| --- | --- |
+| PHP | Unit and HTTP tests for accounts and verification, CSRF and sessions, uploads, form actions, repair validation, contextual chat, activity and notification history. Supabase responses are mocked. |
+| Database | Actual SQL migrations and installer in PGlite, including ownership and participant access, listing and trade transitions, repair approvals, reviews and Storage policies. Auth and Storage are stubs. |
+| UI | DOM behavior for dialogs, menus, validation feedback, sample filters and asset caching. |
+| Browser | Headless Chromium across desktop, tablet and phone widths. Real public routes, navigation, search, assets, keyboard controls and automated WCAG A and AA rules. |
+
+Local tests do not exercise production account writes, multi-session database contention, or inbox delivery. Run browser checks against a configured server. Set `SWAPFIX_TEST_ORIGIN` to change the target, or set `SWAPFIX_TEST_BROWSER_CHANNEL=chrome` to use installed Chrome. Automated accessibility rules cover a subset of accessibility requirements.
 
 `composer check:supabase` performs a real Data API read. `/api/health` reports runtime/configuration state and does not claim it checked external connectivity or email delivery.
 

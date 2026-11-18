@@ -74,6 +74,11 @@ final class SessionManager
         return $this->load($this->stateFrom($tokens, null));
     }
 
+    public function reload(UserSession $session): UserSession
+    {
+        return $this->load(['a' => $session->accessToken, 'm' => $session->email]);
+    }
+
     private function refresh(array $state): ?array
     {
         try {

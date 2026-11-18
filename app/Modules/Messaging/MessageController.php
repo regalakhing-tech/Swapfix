@@ -22,10 +22,7 @@ final class MessageController extends Controller
         $id = $this->id($request, $args);
         $messages = $this->app->messages();
         $conversation = $this->found($request, $messages->conversation($user->accessToken, $id));
-        $unread = $conversation['initiator_id'] === $user->id ? $conversation['initiator_unread'] : $conversation['recipient_unread'];
-        if ($unread > 0) {
-            $messages->markRead($user->accessToken, $id);
-        }
+        $request = $this->markConversationRead($request, $conversation);
         return $this->page($request, $response, 'messages/index', [
             'conversations' => $messages->conversations($user->accessToken), 'active' => $conversation,
             'messages' => $messages->recent($user->accessToken, $id),

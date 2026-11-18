@@ -72,8 +72,9 @@ final class TechnicianController extends Controller
     public function saveService(Request $request, Response $response, array $args): Response
     {
         $user = $this->user($request);
-        $id = isset($args['id']) ? $this->id($request, $args) : null;
         $input = Input::body($request);
+        $serviceId = $args['id'] ?? $input->all()['service_id'] ?? null;
+        $id = $serviceId === null ? null : $this->id($request, ['id' => $serviceId]);
         $fields = [
             'name' => $input->text('name', 120), 'description' => $input->text('description', 2000),
             'supported_brands' => $input->list('supported_brands'), 'supported_models' => $input->list('supported_models'),
@@ -83,7 +84,13 @@ final class TechnicianController extends Controller
             $fields['estimated_price'] = $input->money('estimated_price', 'Estimated price');
             $this->app->technicians()->saveService($user->accessToken, $id, $fields);
         } catch (DomainError $error) {
-            return $this->services($request, $response, [], ['formError' => $error->getMessage(), 'old' => ['id' => $id] + $fields], 422);
+            if ($error->status === 401) {
+                throw $error;
+            }
+            $query = $id === null ? ['add' => '1'] : ['edit' => $id];
+            $uri = $request->getUri()->withPath('/technician/services')->withQuery(http_build_query($query));
+            $viewRequest = $request->withUri($uri)->withQueryParams($query);
+            return $this->services($viewRequest, $response, [], ['formError' => $error->getMessage(), 'old' => ['id' => $id] + $fields], $error->status);
         }
         $this->flash($request)->success($id ? 'Service updated.' : 'Service published.');
         return $this->redirect($response, '/technician/services');

@@ -10,5 +10,6 @@
 /supabase
 /scripts
 /phpunit.xml
+/playwright.config.mjs
 *.log
 /originals

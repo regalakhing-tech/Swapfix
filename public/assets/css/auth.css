@@ -64,7 +64,7 @@
 .auth-form-content .choice-card { align-items: center; gap: 10px; padding: 12px; }
 .auth-form-content .choice-card .icon-tile { flex: none; width: 32px; height: 32px; }
 .auth-form-content .choice-card strong { font-size: 13px; }
-.auth-form-content .choice-card small { margin-top: 3px; font-size: 11px; line-height: 1.4; }
+.auth-form-content .choice-card small { margin-top: 3px; color: var(--auth-muted); font-size: 11px; line-height: 1.4; }
 .auth-form-content .field-hint { margin-top: -8px; font-size: 12px; }
 
 .auth-code-form input[name="code"] { letter-spacing: .3em; font-variant-numeric: tabular-nums; }

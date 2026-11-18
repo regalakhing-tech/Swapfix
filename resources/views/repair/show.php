@@ -18,7 +18,20 @@ $eventLabels = [
 ];
 $nameOf = static fn (?string $person): string => $person === null ? 'SwapFix' : ($person === $ui->session->id ? 'You' : ($person === $customer['id'] ? $customer['display_name'] : $technicianPerson['display_name']));
 $decide = static fn (string $url, string $decision, string $label, string $icon, string $class, array $confirm = []) => $ui->postButton($url, $label, $icon, $class, ['decision' => $decision], $confirm);
+$formDialog = $form['dialog'] ?? null;
+$formValue = static fn (string $dialog, string $name): string => $formDialog === $dialog ? ($form['values'][$name] ?? '') : '';
+$formAlert = static fn (string $dialog): string => $formDialog === $dialog ? $ui->alert($form['error']) : '';
+$formAction = match ($formDialog) {
+    'quote' => 'canQuote',
+    'added' => 'canRequestAddedCost',
+    'cancel' => 'canCancel',
+    'review' => 'canReview',
+    default => null,
+};
 echo $ui->heading('wrench', $repair['device_brand'] . ' ' . $repair['device_model'], Labels::DEVICE_TYPES[$repair['device_type']] ?? '', $ui->status($status));
+if ($formAction !== null && !$actions[$formAction]) {
+    echo $formAlert($formDialog);
+}
 ?>
 <?php if ($status === 'cancelled'): ?>
     <?= $ui->alert('Cancelled by ' . $nameOf($repair['cancelled_by']) . ': ' . $repair['cancel_reason']) ?>
@@ -126,10 +139,11 @@ echo $ui->heading('wrench', $repair['device_brand'] . ' ' . $repair['device_mode
     <?= $ui->dialogStart('quote-dialog', 'Send quotation', 'quote') ?>
     <form method="post" action="<?= $e($base) ?>/quotations" class="stack-form">
         <?= $ui->csrf() ?>
-        <?= $ui->textarea('scope', 'Repair details', '', ['required' => true, 'minlength' => 5, 'maxlength' => 4000], 'The proposed work.') ?>
-        <?= $ui->input('parts', 'Parts', '', ['maxlength' => 2000]) ?>
-        <?= $ui->input('cost', 'Cost (PHP)', '', ['required' => true, 'inputmode' => 'decimal']) ?>
-        <?= $ui->input('estimated_completion', 'Expected completion', '', ['required' => true, 'type' => 'date', 'min' => date('Y-m-d')]) ?>
+        <?= $formAlert('quote') ?>
+        <?= $ui->textarea('scope', 'Repair details', $formValue('quote', 'scope'), ['required' => true, 'minlength' => 5, 'maxlength' => 4000], 'The proposed work.') ?>
+        <?= $ui->input('parts', 'Parts', $formValue('quote', 'parts'), ['maxlength' => 2000]) ?>
+        <?= $ui->input('cost', 'Cost (PHP)', $formValue('quote', 'cost'), ['required' => true, 'inputmode' => 'decimal']) ?>
+        <?= $ui->input('estimated_completion', 'Expected completion', $formValue('quote', 'estimated_completion'), ['required' => true, 'type' => 'date', 'min' => date('Y-m-d')]) ?>
         <button class="button button-primary button-block" type="submit"><?= $ui->icon('send') ?>Send quotation</button>
     </form>
     <?= $ui->dialogEnd() ?>
@@ -138,11 +152,12 @@ echo $ui->heading('wrench', $repair['device_brand'] . ' ' . $repair['device_mode
     <?= $ui->dialogStart('added-dialog', 'Request added cost', 'added') ?>
     <form method="post" action="<?= $e($base) ?>/added-costs" class="stack-form">
         <?= $ui->csrf() ?>
+        <?= $formAlert('added') ?>
         <p class="muted-line">Current agreed total: <?= $ui->money($repair['approved_total']) ?></p>
-        <?= $ui->textarea('reason', 'Issue found', '', ['required' => true, 'minlength' => 5, 'maxlength' => 2000, 'rows' => 3]) ?>
-        <?= $ui->textarea('proposed_work', 'Proposed work', '', ['required' => true, 'minlength' => 5, 'maxlength' => 2000, 'rows' => 3]) ?>
-        <?= $ui->input('amount', 'Added amount (PHP)', '', ['required' => true, 'inputmode' => 'decimal']) ?>
-        <?= $ui->input('revised_completion', 'New completion date', '', ['type' => 'date', 'min' => date('Y-m-d')]) ?>
+        <?= $ui->textarea('reason', 'Issue found', $formValue('added', 'reason'), ['required' => true, 'minlength' => 5, 'maxlength' => 2000, 'rows' => 3]) ?>
+        <?= $ui->textarea('proposed_work', 'Proposed work', $formValue('added', 'proposed_work'), ['required' => true, 'minlength' => 5, 'maxlength' => 2000, 'rows' => 3]) ?>
+        <?= $ui->input('amount', 'Added amount (PHP)', $formValue('added', 'amount'), ['required' => true, 'inputmode' => 'decimal']) ?>
+        <?= $ui->input('revised_completion', 'New completion date', $formValue('added', 'revised_completion'), ['type' => 'date', 'min' => date('Y-m-d')]) ?>
         <button class="button button-primary button-block" type="submit"><?= $ui->icon('send') ?>Send for approval</button>
     </form>
     <?= $ui->dialogEnd() ?>
@@ -151,7 +166,8 @@ echo $ui->heading('wrench', $repair['device_brand'] . ' ' . $repair['device_mode
     <?= $ui->dialogStart('cancel-dialog', 'Cancel repair', 'cancel') ?>
     <form method="post" action="<?= $e($base) ?>/cancel" class="stack-form">
         <?= $ui->csrf() ?>
-        <?= $ui->textarea('reason', 'Reason', '', ['required' => true, 'minlength' => 2, 'maxlength' => 1000, 'rows' => 3]) ?>
+        <?= $formAlert('cancel') ?>
+        <?= $ui->textarea('reason', 'Reason', $formValue('cancel', 'reason'), ['required' => true, 'minlength' => 2, 'maxlength' => 1000, 'rows' => 3]) ?>
         <button class="button button-primary button-block" type="submit">Cancel repair</button>
     </form>
     <?= $ui->dialogEnd() ?>
@@ -160,10 +176,11 @@ echo $ui->heading('wrench', $repair['device_brand'] . ' ' . $repair['device_mode
     <?= $ui->dialogStart('review-dialog', 'Rate this repair', 'review') ?>
     <form method="post" action="<?= $e($base) ?>/review" class="stack-form">
         <?= $ui->csrf() ?>
+        <?= $formAlert('review') ?>
         <fieldset class="rating-input"><legend>Rating</legend>
-            <?php for ($rating = 5; $rating >= 1; $rating--): ?><input class="sr-only" type="radio" id="rating-<?= $rating ?>" name="rating" value="<?= $rating ?>" required><label for="rating-<?= $rating ?>" aria-label="<?= $rating ?> out of 5"><?= $ui->icon('star') ?></label><?php endfor ?>
+            <?php for ($rating = 5; $rating >= 1; $rating--): ?><input class="sr-only" type="radio" id="rating-<?= $rating ?>" name="rating" value="<?= $rating ?>" required<?= $formValue('review', 'rating') === (string) $rating ? ' checked' : '' ?>><label for="rating-<?= $rating ?>" aria-label="<?= $rating ?> out of 5"><?= $ui->icon('star') ?></label><?php endfor ?>
         </fieldset>
-        <?= $ui->textarea('comment', 'Review', '', ['maxlength' => 2000, 'rows' => 3]) ?>
+        <?= $ui->textarea('comment', 'Review', $formValue('review', 'comment'), ['maxlength' => 2000, 'rows' => 3]) ?>
         <button class="button button-primary button-block" type="submit"><?= $ui->icon('send') ?>Submit review</button>
     </form>
     <?= $ui->dialogEnd() ?>

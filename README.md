@@ -22,7 +22,7 @@ Copy-Item .env.example .env
 composer dev
 ```
 
-Open `http://127.0.0.1:8000`. Preserve an existing `.env` instead of copying over it. Configure the selected Supabase project and a unique `APP_KEY`; optional SMTP credentials enable application email. See [SETUP](docs/SETUP.md) for PHP, database and DOM checks.
+Open `http://127.0.0.1:8000`. Preserve an existing `.env` instead of copying over it. Configure the selected Supabase project and a unique `APP_KEY`. Optional SMTP credentials enable application email. See [SETUP](docs/SETUP.md) for PHP, database, DOM and browser checks.
 
 ## 1. Project Overview
 
@@ -444,33 +444,35 @@ The following assumptions clarify the supplied requirements:
 - No courier booking or live delivery tracking integration is specified.
 - A technician can use the marketplace and request another technician's services as a customer.
 - Technician identity verification, administrator tools, dispute handling, and warranty management are not specified as core features.
-- The starter uses PHP, Supabase, PHPMailer, and Vercel. Its image upload limit is 5 MiB. Currency configuration remains an implementation decision.
-- The exact rating scale, post-decline repair handling, cancellation rules, and any re-quotation process should be defined before implementing those cases.
+- SwapFix uses PHP, Supabase, PHPMailer and Vercel. Prices are in Philippine pesos. The app limits the combined images in a submission to 4 MiB with the default configuration.
+- Reviews use a one-to-five-star scale. Declined quotations stay in the repair history, and the technician can send a revised quotation.
 
-## 17. Feature Acceptance Checklist
+## 17. Implementation Checklist
 
-- [ ] Users can register and log in as a customer or technician.
-- [ ] Both roles can edit their name, location, and profile photo.
-- [ ] Technician profiles show specialties, supported brands, service area, hours, and reviews.
-- [ ] Users can create listings for gadgets, accessories, and spare parts with photos and complete item details.
-- [ ] Listings can be searched and filtered by gadget type, brand, condition, price, and location.
-- [ ] Buyers can send product inquiries and discuss transaction arrangements through chat.
-- [ ] Owners can edit, reserve, sell, or remove their listings.
-- [ ] Users can publish exchange listings with wanted-gadget details.
-- [ ] Trade offers support device details, photos, optional cash terms, acceptance, rejection, and counteroffers.
-- [ ] Completed exchanges stop appearing as available.
-- [ ] Technicians can publish repair services with supported models and estimated prices.
-- [ ] Customers can find technicians by location, specialty, and brand.
-- [ ] Customers can submit repair requests with device details, problem descriptions, and optional photos.
-- [ ] Technicians can send quotations with cost, completion estimates, and repair details.
-- [ ] Customers can accept or decline quotations and additional-cost requests.
-- [ ] Repairs follow the defined status flow and retain update history.
-- [ ] Customers and technicians can arrange drop-off and pickup through chat.
-- [ ] Repair history shows device details, agreed price, updates, and completion date.
-- [ ] The technician dashboard separates new requests, pending decisions, active jobs, and completed repairs.
-- [ ] Messages remain associated with the relevant product, trade offer, or repair request.
-- [ ] Notifications cover messages, offers, quotations, approval decisions, and repair status changes.
-- [ ] Customers can rate and review technicians after completed repairs.
-- [ ] My Activity brings together the user's listings, offers, and repair requests.
-- [ ] Access controls protect ownership, private conversations, and repair records.
-- [ ] The main navigation provides Buy & Sell, Exchange, and Repair tabs.
+Each checked item has an application entry point and local PHP, database, or browser coverage. Hosted credentials, mail delivery, and deployment checks are documented in [SETUP](docs/SETUP.md).
+
+- [x] Users can register and log in as a customer or technician.
+- [x] Both roles can edit their name, location, and profile photo.
+- [x] Technician profiles show specialties, supported brands, service area, hours, and reviews.
+- [x] Users can create listings for gadgets, accessories, and spare parts with photos and complete item details.
+- [x] Listings can be searched and filtered by gadget type, brand, condition, price, and location.
+- [x] Buyers can send product inquiries and discuss transaction arrangements through chat.
+- [x] Owners can edit, reserve, sell, or remove their listings.
+- [x] Users can publish exchange listings with wanted-gadget details.
+- [x] Trade offers support device details, photos, optional cash terms, acceptance, rejection, and counteroffers.
+- [x] Completed exchanges stop appearing as available.
+- [x] Technicians can publish repair services with supported models and estimated prices.
+- [x] Customers can find technicians by location, specialty, and brand.
+- [x] Customers can submit repair requests with device details, problem descriptions, and optional photos.
+- [x] Technicians can send quotations with cost, completion estimates, and repair details.
+- [x] Customers can accept or decline quotations and additional-cost requests.
+- [x] Repairs follow the defined status flow and retain update history.
+- [x] Customers and technicians can arrange drop-off and pickup through chat.
+- [x] Repair history shows device details, agreed price, updates, and completion date.
+- [x] The technician dashboard separates new requests, pending decisions, active jobs, and completed repairs.
+- [x] Messages remain associated with the relevant product, trade offer, or repair request.
+- [x] Notifications cover messages, offers, quotations, approval decisions, and repair status changes.
+- [x] Customers can rate and review technicians after completed repairs.
+- [x] My Activity brings together the user's listings, offers, and repair requests.
+- [x] Access controls protect ownership, private conversations, and repair records.
+- [x] The main navigation provides Buy & Sell, Exchange, and Repair tabs.
