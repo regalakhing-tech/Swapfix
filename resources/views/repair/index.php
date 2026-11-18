@@ -6,12 +6,15 @@ $specialties = ['Screen replacement' => 'phone', 'Battery replacement' => 'batte
 ?>
 <section class="browse-page discover-repair" aria-labelledby="repair-directory-title">
     <header class="browse-intro repair-intro">
-        <div>
+        <div class="browse-intro-copy">
             <p class="browse-section-name"><?= $ui->icon('wrench') ?>Repair</p>
             <h1 id="repair-directory-title">Find a technician.</h1>
             <p>Choose a specialty or search by area. Review the technician’s quote before work starts.</p>
+            <?= $session ? $ui->link('/repairs', 'My repairs', 'clipboard', 'button button-outline') : $ui->link('/login?next=%2Frepairs', 'Track a repair', 'clipboard', 'button button-outline') ?>
         </div>
-        <?= $session ? $ui->link('/repairs', 'My repairs', 'clipboard', 'button button-outline') : $ui->link('/login?next=%2Frepairs', 'Track a repair', 'clipboard', 'button button-outline') ?>
+        <div class="browse-scene" aria-hidden="true">
+            <?php $sceneKey = 'scene-repair'; $sceneLabel = ''; $sceneSizes = '(max-width: 720px) 45vw, 340px'; require __DIR__ . '/../partials/scene-art.php'; ?>
+        </div>
     </header>
     <nav class="repair-specialties" aria-label="Popular repair specialties">
         <?php foreach ($specialties as $specialty => $glyph): ?>

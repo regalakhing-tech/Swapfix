@@ -40,6 +40,30 @@
       "960": "/assets/images/home-repair-960.c748e8c99b.webp"
     }
   },
+  "scene-auth": {
+    "width": 960,
+    "height": 720,
+    "sources": {
+      "480": "/assets/images/scene-auth-480.875b0b0ee1.webp",
+      "960": "/assets/images/scene-auth-960.0507e84c04.webp"
+    }
+  },
+  "scene-market": {
+    "width": 720,
+    "height": 540,
+    "sources": {
+      "360": "/assets/images/scene-market-360.28cd502f28.webp",
+      "720": "/assets/images/scene-market-720.1dd08c9028.webp"
+    }
+  },
+  "scene-repair": {
+    "width": 720,
+    "height": 540,
+    "sources": {
+      "360": "/assets/images/scene-repair-360.98ce0434ce.webp",
+      "720": "/assets/images/scene-repair-720.d94bcd6619.webp"
+    }
+  },
   "phone-blue": {
     "width": 640,
     "height": 480,

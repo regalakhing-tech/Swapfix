@@ -6,12 +6,15 @@ $ui->title = 'Buy & Sell';
 ?>
 <section class="browse-page discover-buy-sell" aria-labelledby="market-title">
     <header class="browse-intro market-intro">
-        <div>
+        <div class="browse-intro-copy">
             <p class="browse-section-name"><?= $ui->icon('bag') ?>Buy &amp; Sell</p>
             <h1 id="market-title">Find a gadget worth keeping.</h1>
             <p>Browse secondhand devices and check the price, condition, and location before you message the seller.</p>
+            <?= $ui->link('/market/new', 'List a gadget', 'plus') ?>
         </div>
-        <?= $ui->link('/market/new', 'List a gadget', 'plus') ?>
+        <div class="browse-scene" aria-hidden="true">
+            <?php $sceneKey = 'scene-market'; $sceneLabel = ''; $sceneSizes = '(max-width: 720px) 45vw, 340px'; require __DIR__ . '/../partials/scene-art.php'; ?>
+        </div>
     </header>
 <?php require __DIR__ . '/../partials/filter-chips.php' ?>
 <form class="filter-bar card" method="get" action="/market" role="search">

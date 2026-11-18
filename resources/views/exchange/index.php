@@ -6,12 +6,15 @@ $ui->title = 'Exchange';
 ?>
 <section class="browse-page discover-exchange" aria-labelledby="exchange-title">
     <header class="browse-intro exchange-intro">
-        <div>
+        <div class="browse-intro-copy">
             <p class="browse-section-name"><?= $ui->icon('swap') ?>Exchange</p>
             <h1 id="exchange-title">Trade the tech you have.</h1>
             <p>Browse gadgets open to trade and see what each owner is looking for in return.</p>
+            <?= $ui->link('/exchange/new', 'Post an exchange', 'plus') ?>
         </div>
-        <?= $ui->link('/exchange/new', 'Post an exchange', 'plus') ?>
+        <div class="browse-scene" aria-hidden="true">
+            <?php $sceneKey = 'home-trade'; $sceneLabel = ''; $sceneSizes = '(max-width: 720px) 45vw, 340px'; require __DIR__ . '/../partials/scene-art.php'; ?>
+        </div>
     </header>
 <form class="filter-bar card" method="get" action="/exchange" role="search">
     <label class="search-field filter-search"><?= $ui->icon('search') ?><span class="sr-only">Search exchanges</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" maxlength="100" placeholder="Gadget or what is wanted"></label>

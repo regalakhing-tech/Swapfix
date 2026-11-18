@@ -12,6 +12,11 @@ $isRepair = $view === 'repair';
 $sampleLabel = $isRepair ? 'Sample services' : 'Sample listings';
 $accountUrl = $signedIn ? '/activity' : '/register';
 $accountLabel = $signedIn ? 'My activity' : 'Create account';
+$directoryScenes = [
+    'buy-sell' => ['scene-market', 'Laptop, phone, and earbuds on a blue stand'],
+    'exchange' => ['home-trade', 'Two devices with raised green exchange arrows'],
+    'repair' => ['scene-repair', 'Opened phone and precision screwdriver on a copper stand'],
+];
 ?>
 <!doctype html>
 <html lang="en">
@@ -23,39 +28,13 @@ $accountLabel = $signedIn ? 'My activity' : 'Create account';
     <title>SwapFix | Buy, swap, and repair gadgets</title>
     <link rel="preload" href="<?= $escape($asset('/assets/fonts/sora-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="<?= $escape($asset('/assets/css/app.css')) ?>">
+    <link rel="stylesheet" href="<?= $escape($asset('/assets/css/public-header.css')) ?>">
     <link rel="stylesheet" href="<?= $escape($asset('/assets/css/discover.css')) ?>">
     <script src="<?= $escape($asset('/assets/js/app.js')) ?>" defer></script>
 </head>
 <body class="discover-home">
 <a class="skip-link" href="#main">Skip to content</a>
-<header class="site-header" id="top">
-    <div class="container header-inner">
-        <a class="brand" href="/" aria-label="SwapFix home">
-            <img src="<?= $escape($logo['src']) ?>" alt="SwapFix" width="<?= $logo['width'] ?>" height="<?= $logo['height'] ?>">
-        </a>
-        <nav class="desktop-nav" aria-label="Main navigation">
-            <a href="/" class="home-link" aria-current="page">Home</a>
-            <?php foreach ($sections as [$label, $glyph, $url]): ?>
-                <a href="<?= $escape($url) ?>"><?= $escape($label) ?></a>
-            <?php endforeach ?>
-        </nav>
-        <div class="header-actions">
-            <?php if (!$signedIn): ?><a class="home-signin" href="/login">Sign in</a><?php endif ?>
-            <a class="button button-primary header-cta" href="<?= $accountUrl ?>"><?= $accountLabel ?> <?= $icon('arrow-up-right') ?></a>
-            <details class="mobile-menu">
-                <summary class="icon-button" aria-label="Open navigation"><?= $icon('menu') ?></summary>
-                <nav aria-label="Mobile navigation">
-                    <a href="/" aria-current="page"><?= $icon('home') ?>Home</a>
-                    <?php foreach ($sections as [$label, $glyph, $url]): ?>
-                        <a href="<?= $escape($url) ?>"><?= $icon($glyph) ?><?= $escape($label) ?></a>
-                    <?php endforeach ?>
-                    <?php if (!$signedIn): ?><a href="/login"><?= $icon('user') ?>Sign in</a><?php endif ?>
-                    <a href="<?= $accountUrl ?>"><?= $icon('arrow-up-right') ?><?= $accountLabel ?></a>
-                </nav>
-            </details>
-        </div>
-    </div>
-</header>
+<?php $publicPath = '/'; $publicSignedIn = $signedIn; require __DIR__ . '/partials/public-header.php'; ?>
 <main id="main">
     <section class="home-hero" aria-labelledby="hero-title">
         <div class="container home-hero-grid">
@@ -78,9 +57,13 @@ $accountLabel = $signedIn ? 'My activity' : 'Create account';
         <div class="container home-directory-grid">
             <?php foreach ($sections as $key => [$label, $glyph, $url, , $description]): ?>
                 <a class="home-directory-link discover-<?= $escape($key) ?>" href="<?= $escape($url) ?>">
-                    <span class="discover-symbol"><?= $icon($glyph) ?></span>
-                    <span><strong><?= $escape($label) ?></strong><small><?= $escape($description) ?></small></span>
-                    <?= $icon('arrow-up-right', 'directory-arrow') ?>
+                    <span class="home-directory-art" aria-hidden="true">
+                        <?php [$sceneKey, $sceneLabel] = $directoryScenes[$key]; $sceneSizes = '(max-width: 720px) 112px, 240px'; require __DIR__ . '/partials/scene-art.php'; ?>
+                    </span>
+                    <span class="home-directory-copy">
+                        <span class="home-directory-name"><?= $icon($glyph) ?><strong><?= $escape($label) ?></strong><?= $icon('arrow-up-right', 'directory-arrow') ?></span>
+                        <small><?= $escape($description) ?></small>
+                    </span>
                 </a>
             <?php endforeach ?>
         </div>
@@ -147,12 +130,6 @@ $accountLabel = $signedIn ? 'My activity' : 'Create account';
         <p>&copy; <?= date('Y') ?> SwapFix</p>
     </div>
 </footer>
-<nav class="bottom-tabs" aria-label="Quick navigation">
-    <a href="/" class="active" aria-current="page"><?= $icon('home') ?><span>Home</span></a>
-    <?php foreach ($sections as [$label, $glyph, $url]): ?>
-        <a href="<?= $escape($url) ?>"><?= $icon($glyph) ?><span><?= $escape($label) ?></span></a>
-    <?php endforeach ?>
-</nav>
 <dialog class="detail-dialog start-dialog" id="start-dialog" aria-labelledby="start-title" <?= isset($query['start']) ? 'open' : '' ?>>
     <a class="icon-button dialog-close" href="/#explore" data-close-dialog aria-label="Close getting started"><?= $icon('close') ?></a>
     <div class="start-content">

@@ -1,0 +1,42 @@
+.public-header {
+    --header-height: 80px;
+    z-index: 46;
+    color: var(--navy);
+}
+
+.public-header-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 18px;
+    min-height: var(--header-height);
+}
+
+.public-brand { display: inline-flex; align-items: center; justify-self: start; width: 164px; min-height: 44px; }
+.public-brand img { display: block; width: 100%; height: auto; }
+.public-header-nav, .public-header-actions { display: flex; align-items: center; gap: 6px; }
+.public-header-actions { justify-self: end; gap: 10px; }
+.public-header-nav a, .public-signin { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; border-radius: 9px; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.public-header-nav a:hover, .public-signin:hover { color: var(--primary); background: #f4f7fd; }
+.public-header a[aria-current="page"]:not(.button) { color: var(--primary); background: #e8efff; box-shadow: inset 0 0 0 1px #d2dffb; }
+.public-header .public-account-action { min-height: 44px; padding: 9px 15px; }
+.public-header .public-account-action .icon { width: 17px; height: 17px; }
+.public-header .public-mobile-menu { display: none; }
+.public-bottom-nav { z-index: 45; }
+
+@media (max-width: 960px) {
+    .public-header { --header-height: 68px; }
+    .public-header-inner { grid-template-columns: 1fr auto; gap: 8px; }
+    .public-header-nav, .public-header .public-account-action { display: none; }
+    .public-header .public-mobile-menu { display: block; }
+    .public-header .public-mobile-menu summary { width: 44px; height: 44px; }
+    .public-header .public-mobile-menu nav { top: calc(100% + 8px); }
+    .public-header .public-mobile-menu nav a { min-height: 44px; }
+    .public-bottom-nav a { min-height: 48px; }
+}
+
+@media (max-width: 560px) {
+    .public-header-actions { gap: 2px; }
+    .public-brand { width: clamp(116px, 34vw, 145px); }
+    .public-signin { padding-inline: 8px; }
+}

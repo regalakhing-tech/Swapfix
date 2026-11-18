@@ -1,6 +1,6 @@
 <?php $ui->title = 'Sign in'; ?>
-<h1>Sign in</h1>
-<p class="auth-lead">Welcome back to SwapFix.</p>
+<h1>Sign in to SwapFix</h1>
+<p class="auth-lead">Enter your email and password to continue.</p>
 <div data-email-confirmed <?= $confirmed ? '' : 'hidden' ?>><?= $ui->alert('Email confirmed. Sign in to continue.', 'info') ?></div>
 <?= $ui->alert($error ?? null) ?>
 <form method="post" action="/login" class="stack-form">
