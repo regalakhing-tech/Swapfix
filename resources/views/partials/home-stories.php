@@ -3,6 +3,11 @@ declare(strict_types=1);
 
 use SwapFix\Support\Assets;
 
+$deviceOptions = [
+    ['discover-buy-sell', '/market/new', 'bag', 'Sell it as-is', 'Show the damage in your photos and set a price.'],
+    ['discover-exchange', '/exchange/new', 'swap', 'Offer it for trade', 'Describe its condition and say what you want in return.'],
+    ['discover-repair', '/repair?specialty=Screen+replacement', 'wrench', 'Get the screen fixed', 'Find a technician and ask for a quote.'],
+];
 $sellImage = Assets::image('home-sell');
 $tradeImage = Assets::image('home-trade');
 $repairImage = Assets::image('home-repair');
@@ -14,6 +19,28 @@ $questions = [
     ['Where can I check my updates?', 'Sign in and open My Activity to see your listings, offers, and repairs. Open Messages to continue a conversation.'],
 ];
 ?>
+<section class="home-device" id="device-options" aria-labelledby="home-device-title">
+    <div class="container home-device-grid">
+        <figure class="home-device-art">
+            <?php $sceneKey = 'home-device'; $sceneLabel = 'A smartphone with a cracked screen beside a mint case'; $sceneSizes = '(max-width: 720px) 62vw, 390px'; require __DIR__ . '/scene-art.php'; ?>
+        </figure>
+        <div class="home-device-copy">
+            <h2 id="home-device-title">Cracked screen? You have options.</h2>
+            <ul class="home-device-options">
+                <?php foreach ($deviceOptions as [$theme, $href, $glyph, $label, $description]): ?>
+                    <li>
+                        <a class="home-device-option <?= $escape($theme) ?>" href="<?= $escape($href) ?>">
+                            <span class="discover-symbol"><?= $icon($glyph) ?></span>
+                            <span><strong><?= $escape($label) ?></strong><small><?= $escape($description) ?></small></span>
+                            <?= $icon('arrow-up-right', 'directory-arrow') ?>
+                        </a>
+                    </li>
+                <?php endforeach ?>
+            </ul>
+        </div>
+    </div>
+</section>
+
 <section class="home-feature home-sell" id="sell" aria-labelledby="home-sell-title">
     <div class="container home-feature-grid">
         <figure class="home-feature-media home-sell-media">

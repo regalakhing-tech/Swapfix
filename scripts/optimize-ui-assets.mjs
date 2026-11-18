@@ -20,6 +20,7 @@ const sources = [
   {name:'scene-auth', file:'originals/swapfix-scene-auth.png', widths:[480,960], ratio:[4,3], transparent:true},
   {name:'scene-market', file:'originals/swapfix-scene-market.png', widths:[360,720], ratio:[4,3], transparent:true},
   {name:'scene-repair', file:'originals/swapfix-scene-repair.png', widths:[360,720], ratio:[4,3], transparent:true},
+  {name:'home-device', file:'originals/swapfix-home-device.png', widths:[400,800], ratio:[4,3], transparent:true},
   {name:'phone-blue', file:'originals/blue-iphone-pro-back.webp', widths:[400,640], ratio:[4,3]},
   {name:'phone-graphite', file:'originals/silver-iphone-pro-back.webp', widths:[400,640], ratio:[4,3]},
   {name:'tablet', file:'originals/space-gray-ipad-pro-back.webp', widths:[400,640], ratio:[4,3]},

@@ -29,11 +29,11 @@ $authArt = Assets::image('scene-auth');
     </div>
     <aside class="auth-visual-panel" aria-labelledby="auth-visual-title">
         <div class="auth-visual-copy">
-            <h2 id="auth-visual-title">Your listings, trades, and repairs.</h2>
-            <p>Use one SwapFix account to manage devices, messages, and repair updates.</p>
+            <h2 id="auth-visual-title">Your gadgets in one place.</h2>
+            <p>Manage listings, trades, and repair updates with your SwapFix account.</p>
         </div>
         <div class="auth-visual-art" aria-hidden="true">
-            <img src="<?= $e($authArt['src']) ?>" srcset="<?= $e($authArt['srcset']) ?>" sizes="(max-width: 760px) 36vw, 44vw" width="<?= $authArt['width'] ?>" height="<?= $authArt['height'] ?>" alt="" decoding="async">
+            <img src="<?= $e($authArt['src']) ?>" srcset="<?= $e($authArt['srcset']) ?>" sizes="(max-width: 700px) 120px, 254px" width="<?= $authArt['width'] ?>" height="<?= $authArt['height'] ?>" alt="" decoding="async">
         </div>
     </aside>
 </main>
