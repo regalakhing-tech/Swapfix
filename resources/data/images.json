@@ -16,6 +16,30 @@
       "1200": "/assets/images/hero-discover-1200.a6b2e6ca6d.webp"
     }
   },
+  "home-sell": {
+    "width": 960,
+    "height": 720,
+    "sources": {
+      "480": "/assets/images/home-sell-480.8d482258a7.webp",
+      "960": "/assets/images/home-sell-960.0048fd12a3.webp"
+    }
+  },
+  "home-trade": {
+    "width": 960,
+    "height": 720,
+    "sources": {
+      "480": "/assets/images/home-trade-480.734eb3f22b.webp",
+      "960": "/assets/images/home-trade-960.c90428b6c8.webp"
+    }
+  },
+  "home-repair": {
+    "width": 960,
+    "height": 720,
+    "sources": {
+      "480": "/assets/images/home-repair-480.92c69b1486.webp",
+      "960": "/assets/images/home-repair-960.c748e8c99b.webp"
+    }
+  },
   "phone-blue": {
     "width": 640,
     "height": 480,

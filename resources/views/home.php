@@ -134,26 +134,14 @@ $accountLabel = $signedIn ? 'My activity' : 'Create account';
         </div>
     </section>
 
-    <section class="home-repair-guide" id="how-it-works" aria-labelledby="guide-title">
-        <div class="container home-guide-grid">
-            <div>
-                <h2 id="guide-title">Know the cost before the repair.</h2>
-                <p>Send your device details to a technician. You approve the quote before work begins.</p>
-                <a class="button button-primary" href="/repair">Find a technician <?= $icon('arrow-up-right') ?></a>
-            </div>
-            <ol class="home-guide-steps">
-                <li><?= $icon('search') ?><span><strong>Choose a technician</strong><small>Check specialties, brands, and service areas.</small></span></li>
-                <li><?= $icon('clipboard') ?><span><strong>Review the quotation</strong><small>See the work, price, and estimated completion date.</small></span></li>
-                <li><?= $icon('check-circle') ?><span><strong>Follow the repair</strong><small>Check progress and see when it is ready for pickup.</small></span></li>
-            </ol>
-        </div>
-    </section>
+    <?php require __DIR__ . '/partials/home-stories.php' ?>
 </main>
 <footer class="site-footer home-footer">
     <div class="container footer-bottom">
         <a class="brand" href="/" aria-label="SwapFix home"><img src="<?= $escape($logo['src']) ?>" alt="SwapFix" width="<?= $logo['width'] ?>" height="<?= $logo['height'] ?>" loading="lazy" decoding="async"></a>
         <nav class="footer-links" aria-label="Footer navigation">
             <?php foreach ($sections as [$label, , $url]): ?><a href="<?= $escape($url) ?>"><?= $escape($label) ?></a><?php endforeach ?>
+            <a href="#questions">FAQs</a>
             <a href="<?= $accountUrl ?>"><?= $accountLabel ?></a>
         </nav>
         <p>&copy; <?= date('Y') ?> SwapFix</p>
