@@ -8,13 +8,21 @@ echo $ui->heading('bell', 'Notifications', $unread . ' unread', $unread > 0 ? $u
     <?= $ui->emptyState('bell', 'Nothing new yet.') ?>
 <?php else: ?>
     <div class="card row-list">
-        <?php foreach ($notifications as $item): ?>
+        <?php foreach ($notifications as $item): $isUnread = $item['read_at'] === null; ?>
             <form method="post" action="/notifications/<?= $e($item['id']) ?>/open" class="notification-form">
                 <?= $ui->csrf() ?>
-                <button type="submit" class="list-row <?= $item['read_at'] === null ? 'unread' : '' ?>">
+                <button type="submit" class="notification-row<?= $isUnread ? ' is-unread' : '' ?>">
                     <span class="icon-tile small"><?= $ui->icon($iconFor($item['kind'])) ?></span>
-                    <span><strong><?= $e($item['title']) ?></strong><?php if ($item['body'] !== ''): ?><small><?= $e($item['body']) ?></small><?php endif ?><small><?= $ui->dateTime($item['created_at']) ?></small></span>
-                    <?php if ($item['read_at'] === null): ?><span class="unread-dot" aria-label="Unread"></span><?php endif ?>
+                    <span class="notification-copy">
+                        <strong><?= $e($item['title']) ?></strong>
+                        <?php if ($item['body'] !== ''): ?><span><?= $e($item['body']) ?></span><?php endif ?>
+                        <time datetime="<?= $e($item['created_at']) ?>"><?= $ui->dateTime($item['created_at']) ?></time>
+                    </span>
+                    <?php if ($isUnread): ?><span class="sr-only">Unread</span><?php endif ?>
+                    <span class="notification-end" aria-hidden="true">
+                        <?php if ($isUnread): ?><span class="unread-dot"></span><?php endif ?>
+                        <?= $ui->icon('chevron') ?>
+                    </span>
                 </button>
             </form>
         <?php endforeach ?>
