@@ -12,9 +12,10 @@ Run date: November 19, 2026. Environment: Windows 11, PHP 8.5.0, Node 25.2.1.
 | Workspace behavior tests | `npm run test:ui` (second part) | `app.js` and `workspace.css` in jsdom | 7 passed, 0 failed |
 | PHP syntax | `composer lint` | All application PHP files | 135 files passed |
 | Live smoke test | `node tests/live-smoke.mjs` | A running site and the hosted Supabase data, signed in as one customer and one technician, read-only | 35 checks passed |
+| Live form test | A script written and run by Codex CLI (`gpt-6.1-sol`), kept outside the repository | Real form submissions on https://swapfix.vercel.app as two customers and one technician, then cleanup | 51 passed, 0 failed |
 | Browser tests | `npm run test:browser` | Playwright and axe in a real browser | **Not run** |
 
-These results show the application logic and database rules pass locally, and that every page loads with the hosted data for both account types. The live smoke test opens pages only; it does not submit forms on the hosted project. See [Not verified](#not-verified).
+These results show the application logic and database rules pass locally, every page loads with the hosted data for both account types, and the main forms work on the deployed site. See [Live form test](#live-form-test) and [Not verified](#not-verified).
 
 `npm run test:ui` reads `http://127.0.0.1:8000` by default. Another application was using that port during this run, so the suite ran with `SWAPFIX_TEST_ORIGIN` pointing at a separate local SwapFix server that had no credentials.
 
@@ -134,13 +135,32 @@ These results show the application logic and database rules pass locally, and th
 | Private files | Project files are not served as pages | `HttpTest::testPrivateFilesDoNotResolveAsPublicRoutes` | Pass |
 | Dates | Shown in the application time zone | `UiTest::testDatesUseTheApplicationTimezone` | Pass |
 
+## Live form test
+
+On November 19, 2026, Codex CLI (`gpt-6.1-sol`, xhigh reasoning) submitted the real HTML forms of https://swapfix.vercel.app with the demo accounts Mika Gadgets and Paolo Laptops (customers) and Jerome Phone Repair (technician). Each request loaded a fresh form, sent its CSRF token and hidden fields, and checked the page it redirected to.
+
+| Area | Steps | Result |
+| --- | --- | --- |
+| Sign in | All three accounts | 3 passed |
+| Profile | Change location, restore it exactly | 2 passed |
+| Selling | Publish with a photo, public search, edit the price and keep the photo, Reserved, Available | 5 passed |
+| Refusals | Own-listing inquiry, missing CSRF (403), customer posting a service (403), editing another seller's listing (404), signed-out new listing (redirect to sign-in) | 5 passed |
+| Chat | Inquiry, follow-up, unread badge, badge clears on opening, reply, reply seen by the buyer | 6 passed |
+| Trading | Publish a swap with a photo, offer with 500 cash, counteroffer of 800 with history kept, accept, cancel the agreement | 5 passed |
+| Repair | Request with a service and photo, quotation of 1,500, accept, In Repair, added cost of 300 declined with the total kept at 1,500, cancel | 7 passed |
+| Technician | Hide a service and confirm it leaves the public page, show it again, re-save the profile unchanged | 3 passed |
+| Notifications | Open one through its link and mark all read, for each account | 6 passed |
+| Cleanup | Remove the test listing and swap, confirm the profile and service are restored, confirm public search no longer shows test items | 9 passed |
+
+The test left history in the demo accounts: a cancelled repair, a cancelled offer, the removed test listing and swap (hidden from the public), and three chat threads.
+
 ## Not verified
 
 | Area | Why | How to check |
 | --- | --- | --- |
 | Page appearance at each screen size | No browser was operated, under the project rules | Follow the manual checks below at 1366, 1024, 768, 390, and 360 px |
 | Browser and accessibility suite | Same reason | `npm run test:browser` |
-| Submitting forms on the hosted project | The live smoke test is read-only so it leaves no test records in production | Run the manual checks below against the hosted project |
+| Completing a trade or repair, and posting a review, on the hosted project | These are permanent and reviews are public, so the live form test stopped before them | Covered by `schema.test.mjs` and `WorkflowHttpTest`; run the manual checks below to see them live |
 | Real email delivery | No email was sent | Register with a real address, or run `scripts/mail-test.php` |
 | Two people acting at the same moment | PGlite runs one connection, so true concurrency is not exercised | Test on a real PostgreSQL database |
 
