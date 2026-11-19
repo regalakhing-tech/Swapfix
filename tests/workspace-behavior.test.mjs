@@ -56,6 +56,17 @@ test('oversized multipart photos are stopped before a network submission',() => 
   assert.equal(submit.defaultPrevented,true);
   assert.match(dom.window.document.querySelector('.toast').textContent,/4 MiB/); dom.window.close();
 });
+test('back-to-top link appears only after scrolling down the page',() => {
+  const dom = page('<main id="main">Body</main><a class="back-to-top" href="#main" hidden>Top</a>');
+  const link = dom.window.document.querySelector('.back-to-top');
+  assert.equal(link.hidden,true);
+  Object.defineProperty(dom.window,'scrollY',{value:800,configurable:true});
+  dom.window.dispatchEvent(new dom.window.Event('scroll'));
+  assert.equal(link.hidden,false);
+  Object.defineProperty(dom.window,'scrollY',{value:0,configurable:true});
+  dom.window.dispatchEvent(new dom.window.Event('scroll'));
+  assert.equal(link.hidden,true); dom.window.close();
+});
 test('workspace keeps brand colors, solid surfaces and three responsive shells',async () => {
   const css = await readFile(new URL('../public/assets/css/workspace.css',import.meta.url),'utf8');
   assert.doesNotMatch(css,/gradient\s*\(/i);

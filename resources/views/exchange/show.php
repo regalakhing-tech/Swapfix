@@ -19,7 +19,7 @@ if ($isOwner && $status === 'open') {
 } elseif (!$isOwner && $status === 'open' && !$session) {
     $actions = $ui->link('/login?next=' . rawurlencode('/exchange/' . $id . '?offer=1'), 'Sign in to offer', 'swap');
 }
-echo $ui->heading('swap', $exchange['title'], trim($exchange['brand'] . ' ' . $exchange['model']), $actions);
+echo $ui->heading('swap', $exchange['title'], trim($exchange['brand'] . ' ' . $exchange['model']), $ui->link('/exchange', 'Back', 'arrow-left', 'button button-outline') . $actions);
 $photoSources = array_map(static fn (string $path): string => $ui->photoUrl('listing-images', $path), $exchange['photo_paths']);
 $photoAlt = $exchange['title'];
 $photoIcon = 'camera';

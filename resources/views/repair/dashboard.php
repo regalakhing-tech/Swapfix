@@ -1,16 +1,23 @@
 <?php
-echo $ui->heading('grid', 'Technician dashboard', count($board['new']) . ' new, ' . count($board['active']) . ' active', $ui->link('/technician/services', 'Services', 'settings', 'button button-outline'));
+echo $ui->dashHero(
+    'wrench',
+    'Technician',
+    'Technician dashboard',
+    count($board['new']) . ' new, ' . count($board['active']) . ' active',
+    $ui->link('/technician/services', 'Services', 'settings', 'button button-light') . $ui->link('/technician/profile', 'Public profile', 'shield', 'button button-ghost'),
+);
 $groups = [
-    'new' => ['New requests', 'clipboard', 'stat-blue'],
-    'awaiting' => ['Awaiting customer', 'clock', 'stat-amber'],
-    'active' => ['Active jobs', 'wrench', 'stat-teal'],
-    'completed' => ['Completed', 'check-circle', 'stat-green'],
+    'new' => ['New requests', 'clipboard', 'blue'],
+    'awaiting' => ['Awaiting customer', 'clock', 'amber'],
+    'active' => ['Active jobs', 'wrench', 'teal'],
+    'completed' => ['Completed', 'check-circle', 'green'],
 ];
+$jobTotal = array_sum(array_map('count', $board));
 $showCustomer = true;
 ?>
 <div class="metrics">
     <?php foreach ($groups as $key => [$label, $glyph, $tone]): ?>
-        <a class="stat <?= $e($tone) ?>" href="#<?= $e($key) ?>"><span class="stat-icon"><?= $ui->icon($glyph) ?></span><strong><?= count($board[$key]) ?></strong><span><?= $e($label) ?></span></a>
+        <?= $ui->kpi($glyph, count($board[$key]), $label, $tone, '#' . $key, [count($board[$key]), $jobTotal]) ?>
     <?php endforeach ?>
 </div>
 <div class="panel-grid">

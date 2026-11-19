@@ -14,6 +14,21 @@ trait UiComponents
             . ($actions !== '' ? '<div class="page-actions">' . $actions . '</div>' : '') . '</header>';
     }
 
+    /** The welcome banner at the top of a dashboard. */
+    public function dashHero(string $icon, string $badge, string $title, string $subtitle, string $actions = '', string $pageTitle = ''): string
+    {
+        $this->title = $pageTitle !== '' ? $pageTitle : $title;
+        return '<section class="dash-hero"><div class="dash-hero-copy"><span class="dash-pill">' . $this->icon($icon) . $this->e($badge) . '</span><h1>' . $this->e($title) . '</h1><p>' . $this->e($subtitle) . '</p></div>'
+            . ($actions !== '' ? '<div class="dash-hero-actions">' . $actions . '</div>' : '') . '</section>';
+    }
+
+    /** A dashboard number. $share is [part, whole] and draws a progress bar without inline styles, which the CSP blocks. */
+    public function kpi(string $icon, int|string $value, string $label, string $tone, string $href, ?array $share = null): string
+    {
+        $bar = $share === null ? '' : '<progress value="' . (int) $share[0] . '" max="' . max(1, (int) $share[1]) . '" aria-label="' . $this->e($label) . ' share of jobs"></progress>';
+        return '<a class="kpi kpi-' . $this->e($tone) . '" href="' . $this->e($href) . '"><span class="kpi-head"><span class="kpi-label">' . $this->e($label) . '</span><span class="kpi-icon">' . $this->icon($icon) . '</span></span><strong class="kpi-value">' . $this->e($value) . '</strong>' . $bar . '</a>';
+    }
+
     public function link(string $href, string $label, string $icon = '', string $class = 'button button-primary', array $attributes = []): string
     {
         return '<a class="' . $this->e($class) . '" href="' . $this->e($href) . '"' . $this->attributes($attributes) . '>' . ($icon !== '' ? $this->icon($icon) : '') . $this->e($label) . '</a>';

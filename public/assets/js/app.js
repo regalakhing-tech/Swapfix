@@ -1,13 +1,5 @@
 (() => {
   'use strict';
-  const savedKey = 'swapfix.preview.saved.v1';
-  const saveButtons = [...document.querySelectorAll('[data-save]')];
-  let saved = new Set();
-  try {
-    const stored = JSON.parse(localStorage.getItem(savedKey) || '[]');
-    if (Array.isArray(stored)) saved = new Set(stored.filter(id => typeof id === 'string' && /^[a-z0-9-]{1,64}$/.test(id)).slice(0,50));
-  } catch { /* A blocked or invalid store must not prevent browsing. */ }
-
   function toast(message, error = false) {
     const activeDialog = document.querySelector('dialog[open]');
     let stack = activeDialog?.querySelector('.dialog-toast-stack') || document.getElementById('toast-stack');
@@ -28,30 +20,6 @@
     const timer = setTimeout(remove,error ? 6000 : 2000);
     close.addEventListener('click',remove);
   }
-
-  function syncSaved() {
-    saveButtons.forEach(button => {
-      const active = saved.has(button.dataset.save);
-      button.classList.toggle('is-saved',active);
-      button.setAttribute('aria-pressed',String(active));
-      button.setAttribute('aria-label',`${active ? 'Unsave' : 'Save'} ${button.dataset.saveName}`);
-      const label = button.querySelector('[data-save-label]');
-      if (label) label.textContent = active ? 'Saved on this browser' : 'Save for later';
-      button.hidden = false;
-    });
-  }
-  syncSaved();
-  saveButtons.forEach(button => button.addEventListener('click',() => {
-    const id = button.dataset.save;
-    const next = new Set(saved);
-    const removing = next.has(id);
-    if (removing) next.delete(id); else next.add(id);
-    try {
-      localStorage.setItem(savedKey,JSON.stringify([...next].slice(-50)));
-      saved = new Set([...next].slice(-50)); syncSaved();
-      toast(removing ? `${button.dataset.saveName} removed from saved items.` : `${button.dataset.saveName} saved on this browser.`);
-    } catch { toast('This browser could not save the item. Please check storage settings.',true); }
-  }));
 
   const dialogs = [...document.querySelectorAll('dialog')];
   function closeDialog(dialog) { dialog.close(); }
@@ -159,7 +127,11 @@
   document.addEventListener('click',event => document.querySelectorAll('.mobile-menu[open]').forEach(menu => { if (!menu.contains(event.target)) menu.removeAttribute('open'); }));
   document.addEventListener('keydown',event => { if (event.key === 'Escape') document.querySelectorAll('.mobile-menu[open]').forEach(menu => menu.removeAttribute('open')); });
   const header = document.querySelector('.site-header');
-  const updateHeader = () => header?.classList.toggle('is-scrolled',window.scrollY > 16);
+  const backToTop = document.querySelector('.back-to-top');
+  const updateHeader = () => {
+    header?.classList.toggle('is-scrolled',window.scrollY > 16);
+    if (backToTop) backToTop.hidden = window.scrollY < 600;
+  };
   window.addEventListener('scroll',updateHeader,{passive:true}); updateHeader();
   const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   if (!reduced && 'IntersectionObserver' in window) {

@@ -4,19 +4,25 @@ declare(strict_types=1);
 use SwapFix\Support\Assets;
 
 $deviceOptions = [
-    ['discover-buy-sell', '/market/new', 'bag', 'Sell it as-is', 'Show the damage in your photos and set a price.'],
-    ['discover-exchange', '/exchange/new', 'swap', 'Offer it for trade', 'Describe its condition and say what you want in return.'],
-    ['discover-repair', '/repair?specialty=Screen+replacement', 'wrench', 'Get the screen fixed', 'Find a technician and ask for a quote.'],
+    ['discover-buy-sell', '/market/new', 'bag', 'Sell it as-is', 'Show the damage and set a price.'],
+    ['discover-exchange', '/exchange/new', 'swap', 'Offer it for trade', 'Say what you want in return.'],
+    ['discover-repair', '/repair?specialty=Screen+replacement', 'wrench', 'Get the screen fixed', 'Find a technician and get a quote.'],
 ];
 $sellImage = Assets::image('home-sell');
 $tradeImage = Assets::image('home-trade');
 $repairImage = Assets::image('home-repair');
+$safetyTips = [
+    ['pin', 'Meet in public', 'Choose a busy, safe place.'],
+    ['check-circle', 'Test first', 'Check the device before paying.'],
+    ['message', 'Keep it in chat', 'Your agreement stays on record.'],
+    ['alert', 'Trust your gut', 'Walk away if a deal feels off.'],
+];
 $questions = [
-    ['What can I list on SwapFix?', 'Post phones, tablets, laptops, accessories, and spare parts. Include clear photos, the condition, and any defects.'],
-    ['How do payments and meetups work?', 'Buyers and sellers agree on payment and handover in their SwapFix conversation. Check the device and confirm the details before paying.'],
-    ['Can I add cash to an exchange?', 'Yes. Include the cash amount and who will pay it when you make an offer. The other person can accept, decline, or counter.'],
-    ['What if a repair needs extra work?', 'Your technician can request approval for the extra work and cost. Review the new amount before deciding whether to accept it.'],
-    ['Where can I check my updates?', 'Sign in and open My Activity to see your listings, offers, and repairs. Open Messages to continue a conversation.'],
+    ['bag', 'What can I list on SwapFix?', 'Phones, tablets, laptops, accessories, and spare parts. Add clear photos, the condition, and any defects.'],
+    ['cash', 'How do payments and meetups work?', 'Buyers and sellers agree on payment and handover in chat. SwapFix does not process payments.'],
+    ['swap', 'Can I add cash to an exchange?', 'Yes. Set the amount and who pays it in your offer. The other person can accept, decline, or counter.'],
+    ['wrench', 'What if a repair needs extra work?', 'Your technician must request approval first. You review the new amount before it applies.'],
+    ['activity', 'Where can I check my updates?', 'Sign in and open My Activity for listings, offers, and repairs. Messages holds your conversations.'],
 ];
 ?>
 <section class="home-device" id="device-options" aria-labelledby="home-device-title">
@@ -49,10 +55,10 @@ $questions = [
         <div class="home-feature-copy">
             <p class="home-feature-label"><?= $icon('bag') ?> Selling on SwapFix</p>
             <h2 id="home-sell-title">Have a gadget you no longer use?</h2>
-            <p>Make it easy for the next owner to decide. Show how it works, what comes with it, and what you’re asking.</p>
             <ul class="home-feature-points">
-                <li><?= $icon('camera') ?><span><strong>Show the device clearly</strong><small>Add photos and point out any wear or damage.</small></span></li>
-                <li><?= $icon('pin') ?><span><strong>Set a price and location</strong><small>Let interested buyers know where they can meet you.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('camera') ?></span><span><strong>Show it clearly</strong><small>Add photos and note any wear.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('pin') ?></span><span><strong>Set price and place</strong><small>Tell buyers where to meet.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('message') ?></span><span><strong>Reply in chat</strong><small>Answer buyers in one place.</small></span></li>
             </ul>
             <a class="button button-primary" href="/market/new">List a gadget <?= $icon('arrow-up-right') ?></a>
         </div>
@@ -64,7 +70,11 @@ $questions = [
         <div class="home-feature-copy">
             <p class="home-feature-label"><?= $icon('swap') ?> Gadget exchange</p>
             <h2 id="home-trade-title">Trade for the device you need.</h2>
-            <p>Post the gadget you have and name what you want in return. Compare offers, agree on the terms, then arrange the handover in chat.</p>
+            <ul class="home-feature-points">
+                <li><span class="feature-icon"><?= $icon('plus') ?></span><span><strong>Post your gadget</strong><small>Name what you want back.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('cash') ?></span><span><strong>Compare offers</strong><small>Accept, decline, or counter.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('check-circle') ?></span><span><strong>Complete the swap</strong><small>Arrange the handover in chat.</small></span></li>
+            </ul>
             <div class="home-feature-actions">
                 <a class="button home-trade-action" href="/exchange">Browse exchanges <?= $icon('arrow-up-right') ?></a>
                 <a class="button button-outline" href="/exchange/new">Post a trade</a>
@@ -85,12 +95,25 @@ $questions = [
             <p class="home-feature-label"><?= $icon('wrench') ?> Repair services</p>
             <h2 id="guide-title">Know the cost before the repair.</h2>
             <ol class="home-feature-points">
-                <li><?= $icon('search') ?><span><strong>Choose a technician</strong><small>Check specialties, supported brands, and service areas.</small></span></li>
-                <li><?= $icon('clipboard') ?><span><strong>Review the quotation</strong><small>See the work, price, and estimated completion date.</small></span></li>
-                <li><?= $icon('check-circle') ?><span><strong>Follow the repair</strong><small>Check progress and see when it is ready for pickup.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('search') ?></span><span><strong>Choose a technician</strong><small>Check skills, brands, and area.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('clipboard') ?></span><span><strong>Review the quote</strong><small>See the work, price, and date.</small></span></li>
+                <li><span class="feature-icon"><?= $icon('check-circle') ?></span><span><strong>Follow the repair</strong><small>Know when it is ready.</small></span></li>
             </ol>
             <a class="button home-primary-action" href="/repair">Find a technician <?= $icon('arrow-up-right') ?></a>
         </div>
+    </div>
+</section>
+
+<section class="home-safety" id="safety" aria-labelledby="safety-title">
+    <div class="container">
+        <header class="home-section-head">
+            <h2 id="safety-title">Deal with confidence</h2>
+        </header>
+        <ul class="home-safety-grid">
+            <?php foreach ($safetyTips as [$glyph, $title, $text]): ?>
+                <li><span class="discover-symbol"><?= $icon($glyph) ?></span><strong><?= $escape($title) ?></strong><small><?= $escape($text) ?></small></li>
+            <?php endforeach ?>
+        </ul>
     </div>
 </section>
 
@@ -98,12 +121,12 @@ $questions = [
     <div class="container home-questions-grid">
         <header>
             <h2 id="questions-title">Common questions</h2>
-            <p>How listings, exchanges, and repairs work on SwapFix.</p>
+            <p>Listings, exchanges, and repairs.</p>
         </header>
         <div class="home-question-list">
-            <?php foreach ($questions as [$question, $answer]): ?>
+            <?php foreach ($questions as [$glyph, $question, $answer]): ?>
                 <details>
-                    <summary><span><?= $escape($question) ?></span><?= $icon('plus') ?></summary>
+                    <summary><span class="discover-symbol"><?= $icon($glyph) ?></span><span><?= $escape($question) ?></span><?= $icon('plus', 'question-toggle') ?></summary>
                     <p><?= $escape($answer) ?></p>
                 </details>
             <?php endforeach ?>

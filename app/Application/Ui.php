@@ -125,6 +125,19 @@ final class Ui
         return $this->path === $prefix || str_starts_with($this->path, rtrim($prefix, '/') . '/');
     }
 
+    /** The active navigation entry as [group, label, icon], for the top bar. */
+    public function currentPage(): array
+    {
+        foreach ($this->navigation() as $group => $items) {
+            foreach ($items as [$href, $label, , $glyph]) {
+                if ($this->active($href)) {
+                    return [$group, $label, $glyph];
+                }
+            }
+        }
+        return ['SwapFix', $this->title, 'grid'];
+    }
+
     /** Sidebar groups: group => list of [path, label, short label, icon, badge count]. */
     public function navigation(): array
     {

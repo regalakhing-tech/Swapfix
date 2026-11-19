@@ -25,6 +25,10 @@ const sources = [
   {name:'phone-graphite', file:'originals/silver-iphone-pro-back.webp', widths:[400,640], ratio:[4,3]},
   {name:'tablet', file:'originals/space-gray-ipad-pro-back.webp', widths:[400,640], ratio:[4,3]},
   {name:'laptop', file:'originals/acer-predator-laptop-open.webp', widths:[400,640], ratio:[4,3]},
+  {name:'product-earbuds', file:'originals/swapfix-product-earbuds.png', widths:[400,640], ratio:[4,3]},
+  {name:'product-charger', file:'originals/swapfix-product-charger.png', widths:[400,640], ratio:[4,3]},
+  {name:'product-battery', file:'originals/swapfix-product-battery.png', widths:[400,640], ratio:[4,3]},
+  {name:'product-logic-board', file:'originals/swapfix-product-logic-board.png', widths:[400,640], ratio:[4,3]},
 ];
 
 for (const source of sources) {
@@ -53,6 +57,19 @@ const hash = createHash('sha256').update(logo).digest('hex').slice(0,10);
 const logoName = `swapfix-logo.${hash}.png`;
 await writeFile(path.join(output,logoName),logo);
 manifest.logo = {width:logoMeta.width,height:logoMeta.height,sources:{700:`/assets/images/${logoName}`}};
+// Browser tab icons: the phone-and-wrench mark cut from the logo, on white so it stays visible on dark tabs.
+const markArea = await sharp(path.join(output,'swapfix-logo-transparent.png')).extract({left:131,top:0,width:479,height:724}).png().toBuffer();
+const mark = await sharp(markArea).trim({threshold:10}).png().toBuffer();
+for (const [iconName,size,radius] of [['favicon',64,14],['apple-touch-icon',180,0]]) {
+  const inner = Math.round(size*.86);
+  const art = await sharp(mark).resize(inner,inner,{fit:'contain',background:{r:0,g:0,b:0,alpha:0}}).png().toBuffer();
+  const tile = Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}"><rect width="${size}" height="${size}" rx="${radius}" fill="#fff"/></svg>`);
+  const icon = await sharp(tile).composite([{input:art,gravity:'centre'}]).png({compressionLevel:9}).toBuffer();
+  const iconFile = `${iconName}.${createHash('sha256').update(icon).digest('hex').slice(0,10)}.png`;
+  await writeFile(path.join(output,iconFile),icon);
+  manifest[iconName] = {width:size,height:size,sources:{[size]:`/assets/images/${iconFile}`}};
+  console.log(`${iconFile}: ${icon.length} bytes`);
+}
 await writeFile(path.join(root,'resources/data/images.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(`${logoName}: ${logo.length} bytes; transparent alpha preserved`);
 const fontHash = crc32(await readFile(path.join(root,'public/assets/fonts/sora-latin.woff2'))).toString(16).padStart(8,'0');

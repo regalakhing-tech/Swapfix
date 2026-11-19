@@ -12,7 +12,6 @@
 | `app/Modules/Messaging/` | Participant conversations and contextual threads |
 | `app/Modules/Notifications/` | Notifications and optional SMTP outbox worker |
 | `app/Modules/Activity/` | Personal listings, offers, repairs, chats and reviews |
-| `app/Preview/`, `resources/data/catalog.php` | Explicitly illustrative homepage catalog |
 | `app/Support/` | Crypto, decimal money, labels, UUIDs, icons and versioned assets |
 | `routes/` | Browser routes and read/health APIs |
 | `resources/views/` | PHP layouts, pages, partials and email templates |

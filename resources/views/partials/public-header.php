@@ -28,8 +28,8 @@ $publicCurrent = static function (string $href) use ($publicPath): bool {
             <img src="<?= htmlspecialchars($publicLogo['src'], ENT_QUOTES, 'UTF-8') ?>" alt="SwapFix" width="<?= $publicLogo['width'] ?>" height="<?= $publicLogo['height'] ?>">
         </a>
         <nav class="public-header-nav" aria-label="Main navigation">
-            <?php foreach ($publicNav as [$href, $label]): ?>
-                <a href="<?= $href ?>"<?= $publicCurrent($href) ? ' aria-current="page"' : '' ?>><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></a>
+            <?php foreach ($publicNav as [$href, $label, $glyph]): ?>
+                <a href="<?= $href ?>"<?= $publicCurrent($href) ? ' aria-current="page"' : '' ?>><?= Icon::render($glyph) ?><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></a>
             <?php endforeach ?>
         </nav>
         <div class="public-header-actions">

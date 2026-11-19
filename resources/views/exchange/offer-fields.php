@@ -4,7 +4,7 @@ use SwapFix\Support\Labels;
 /** @var array $old @var bool $allowPhotos */
 $amount = (float) ($old['cash_amount'] ?? 0) > 0 ? $old['cash_amount'] : '';
 ?>
-<div class="form-grid">
+<div class="form-grid offer-grid">
     <?= $ui->input('device_title', 'Gadget offered', $old['device_title'], ['required' => true, 'minlength' => 3, 'maxlength' => 150, 'data-wide' => true]) ?>
     <?= $ui->input('brand', 'Brand', $old['brand'], ['required' => true, 'maxlength' => 60]) ?>
     <?= $ui->input('model', 'Model', $old['model'], ['maxlength' => 80]) ?>

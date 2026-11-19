@@ -16,13 +16,28 @@
 .public-brand img { display: block; width: 100%; height: auto; }
 .public-header-nav, .public-header-actions { display: flex; align-items: center; gap: 6px; }
 .public-header-actions { justify-self: end; gap: 10px; }
-.public-header-nav a, .public-signin { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; border-radius: 9px; font-size: 13px; font-weight: 650; white-space: nowrap; }
+.public-header-nav a, .public-signin { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 8px 12px; border-radius: 9px; font-size: 13px; font-weight: 650; white-space: nowrap; }
 .public-header-nav a:hover, .public-signin:hover { color: var(--primary); background: #f4f7fd; }
 .public-header a[aria-current="page"]:not(.button) { color: var(--primary); background: #e8efff; box-shadow: inset 0 0 0 1px #d2dffb; }
 .public-header .public-account-action { min-height: 44px; padding: 9px 15px; }
 .public-header .public-account-action .icon { width: 17px; height: 17px; }
 .public-header .public-mobile-menu { display: none; }
 .public-bottom-nav { z-index: 45; }
+.public-header-nav .icon { width: 18px; height: 18px; }
+
+@media (max-width: 1180px) {
+    .public-header-nav .icon { display: none; }
+}
+
+.public-footer { padding-block: 48px 24px; border-top: 1px solid var(--line); background: #fff; }
+.public-footer-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); gap: 32px; }
+.public-footer-brand .brand { width: 152px; }
+.public-footer-brand p { margin-top: 12px; color: var(--muted); font-size: 13px; }
+.public-footer h2 { margin-bottom: 8px; font-size: 13px; font-weight: 700; letter-spacing: 0; }
+.public-footer nav a { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 13px; }
+.public-footer nav a:hover { color: var(--primary); }
+.public-footer nav .icon { width: 18px; height: 18px; color: var(--muted); }
+.public-footer-bottom { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 
 @media (max-width: 960px) {
     .public-header { --header-height: 68px; }
@@ -39,4 +54,13 @@
     .public-header-actions { gap: 2px; }
     .public-brand { width: clamp(116px, 34vw, 145px); }
     .public-signin { padding-inline: 8px; }
+}
+
+@media (max-width: 860px) {
+    .public-footer-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .public-footer-brand { grid-column: 1 / -1; }
+}
+
+@media (max-width: 720px) {
+    .public-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px 16px; }
 }

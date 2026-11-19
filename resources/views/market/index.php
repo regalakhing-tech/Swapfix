@@ -3,13 +3,26 @@ use SwapFix\Support\Labels;
 
 $total = (int) $results['total'];
 $ui->title = 'Buy & Sell';
+$minPrice = (float) ($filters['min'] ?? 0);
+$maxPrice = (float) ($filters['max'] ?? 0);
+$priceChip = static fn (string $label, ?int $min, ?int $max): array => [$label, 'cash', ['min' => $min, 'max' => $max], $minPrice === (float) $min && $maxPrice === (float) $max];
+$conditionChip = static fn (string $key): array => [Labels::CONDITIONS[$key], 'check-circle', ['condition' => $key], $filters['condition'] === $key];
+$quickFilters = [
+    'Price' => [$priceChip('Under ₱5,000', null, 5000), $priceChip('₱5,000 to ₱20,000', 5000, 20000), $priceChip('Over ₱20,000', 20000, null)],
+    'Condition' => [$conditionChip('new'), $conditionChip('like_new'), $conditionChip('good')],
+];
 ?>
 <section class="browse-page discover-buy-sell" aria-labelledby="market-title">
     <header class="browse-intro market-intro">
         <div class="browse-intro-copy">
             <p class="browse-section-name"><?= $ui->icon('bag') ?>Buy &amp; Sell</p>
             <h1 id="market-title">Find a gadget worth keeping.</h1>
-            <p>Browse secondhand devices and check the price, condition, and location before you message the seller.</p>
+            <p>Check price, condition, and location before you message the seller.</p>
+            <ul class="browse-facts">
+                <li><?= $ui->icon('bag') ?><?= $total ?> <?= $total === 1 ? 'listing' : 'listings' ?></li>
+                <li><?= $ui->icon('shield') ?>Verified email</li>
+                <li><?= $ui->icon('message') ?>Built-in chat</li>
+            </ul>
             <?= $ui->link('/market/new', 'List a gadget', 'plus') ?>
         </div>
         <div class="browse-scene" aria-hidden="true">
@@ -17,6 +30,7 @@ $ui->title = 'Buy & Sell';
         </div>
     </header>
 <?php require __DIR__ . '/../partials/filter-chips.php' ?>
+<?php require __DIR__ . '/../partials/quick-filters.php' ?>
 <form class="filter-bar card" method="get" action="/market" role="search">
     <label class="search-field filter-search"><?= $ui->icon('search') ?><span class="sr-only">Search listings</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" maxlength="100" placeholder="Name, brand or model"></label>
     <input type="hidden" name="category" value="<?= $e($filters['category']) ?>">
@@ -38,25 +52,9 @@ $ui->title = 'Buy & Sell';
     <?= $ui->emptyState('bag', 'No listings match yet.', $ui->link('/market', 'Clear filters', 'close', 'button button-outline')) ?>
 <?php else: ?>
     <div class="product-grid live-grid">
-        <?php foreach ($results['items'] as $item): $photo = $item['photo_paths'][0] ?? null; ?>
-            <article class="product-card">
-                <div class="product-photo <?= $photo ? '' : 'service-photo' ?>">
-                    <a href="/market/<?= $e($item['id']) ?>" aria-label="View <?= $e($item['title']) ?>">
-                        <?php if ($photo): ?><img src="<?= $e($ui->photoUrl('listing-images', $photo)) ?>" width="640" height="480" alt="<?= $e($item['title']) ?>" loading="lazy" decoding="async"><?php else: ?><span class="service-symbol"><?= $ui->icon(Labels::CATEGORY_ICONS[$item['category']] ?? 'bag') ?></span><?php endif ?>
-                    </a>
-                    <?php if ($item['status'] === 'reserved'): ?><span class="listing-badge"><?= $e(Labels::status('reserved')) ?></span><?php endif ?>
-                </div>
-                <div class="product-body">
-                    <p class="item-condition"><?= $ui->icon('check-circle') ?><?= $e(Labels::CONDITIONS[$item['condition']] ?? '') ?></p>
-                    <h3><a href="/market/<?= $e($item['id']) ?>"><?= $e($item['title']) ?></a></h3>
-                    <p class="product-specification"><?= $e(trim($item['brand'] . ' ' . $item['model'])) ?></p>
-                    <?php if ($item['known_defects'] !== ''): ?><p class="defect-note"><?= $ui->icon('alert') ?>Has known defects</p><?php endif ?>
-                    <div class="product-price"><?= $ui->money($item['price']) ?></div>
-                    <p class="item-location"><?= $ui->icon('pin') ?><?= $e($item['location']) ?></p>
-                </div>
-            </article>
-        <?php endforeach ?>
+        <?php foreach ($results['items'] as $item): require __DIR__ . '/../partials/listing-card.php'; endforeach ?>
     </div>
     <?= $ui->pagination($total, $pageNumber, $pageSize) ?>
 <?php endif ?>
+<?php $guideKey = 'buy-sell'; $guideCta = ['Selling something?', 'Reach buyers near you.', '/market/new', 'Start selling', 'bag']; require __DIR__ . '/../partials/section-guide.php' ?>
 </section>

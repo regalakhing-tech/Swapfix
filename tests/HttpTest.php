@@ -14,10 +14,13 @@ final class HttpTest extends TestCase
 
     public function testHomeLoadsWithoutExternalCredentials(): void
     {
-        $response = $this->response('GET', '/');
+        $services = require __DIR__ . '/../config/services.php';
+        $services['supabase']['url'] = $services['supabase']['publishable_key'] = '';
+        $app = \SwapFix\Application\Application::create(require __DIR__ . '/../config/app.php', $services);
+        $response = $app->handle((new ServerRequestFactory())->createServerRequest('GET', '/'));
         self::assertSame(200, $response->getStatusCode());
         self::assertStringContainsString('SwapFix', (string) $response->getBody());
-        self::assertStringContainsString('Sample listings', (string) $response->getBody());
+        self::assertStringContainsString('Could not load the latest posts.', (string) $response->getBody());
         self::assertSame('no-cache', $response->getHeaderLine('Cache-Control'));
     }
 

@@ -8,7 +8,7 @@ This document describes SwapFix's users, features, pages, workflows, and functio
 
 The project includes customer and technician accounts, product listings, exchange offers and counteroffers, repair quotations and added-cost approval, tracking, contextual chat, notifications, reviews and activity history. PHP and Slim render the pages. Supabase provides Auth, PostgreSQL and Storage. PHPMailer supports optional SMTP notifications, and Vercel runs the PHP application in a FrankenPHP container.
 
-The public homepage uses the transparent SwapFix logo, blue and teal brand colors, a generated gadget hero and sample photos from RussDtech. Its illustrative catalog is separate from live inventory at `/market`, `/exchange` and `/repair`. New projects begin with empty live lists. Participants arrange payments and handovers through chat.
+The public homepage uses the transparent SwapFix logo, blue and teal brand colors, and a generated gadget hero. Its Buy & Sell, Exchange and Repair tabs show the eight newest live listings, trades and technicians from `/market`, `/exchange` and `/repair`. If Supabase is not connected or does not respond, the homepage says so and never shows made-up items. Participants arrange payments and handovers through chat.
 
 - [Setup and deployment instructions](docs/SETUP.md)
 - [Folder structure and module responsibilities](docs/FILE_STRUCTURE.md)

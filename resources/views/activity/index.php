@@ -3,7 +3,16 @@ use SwapFix\Modules\Exchange\OfferActions;
 use SwapFix\Modules\Messaging\MessageRepository;
 
 $me = $ui->session->id;
-echo $ui->heading('activity', 'My Activity', $tabs[$tab][0]);
+$session = $ui->session;
+$shown = ($pageNumber - 1) * 50 + count($items);
+echo $ui->dashHero(
+    $session->isTechnician() ? 'wrench' : 'user',
+    $session->isTechnician() ? 'Technician' : 'Customer',
+    'Welcome back, ' . $session->name(),
+    'Your listings, trades, and repairs.',
+    $ui->link('/market/new', 'Sell', 'bag', 'button button-light') . $ui->link('/exchange/new', 'Trade', 'swap', 'button button-ghost') . $ui->link('/repair', 'Repair', 'wrench', 'button button-ghost'),
+    'My Activity',
+);
 $empties = [
     'listings' => ['You have no listings yet.', $ui->link('/market/new', 'New listing', 'plus')],
     'exchanges' => ['You have no exchange listings yet.', $ui->link('/exchange/new', 'New exchange', 'plus')],
@@ -17,6 +26,11 @@ $thumb = static function (array $item, string $glyph) use ($ui, $e): string {
     return $photo ? '<img class="row-thumb" src="' . $e($ui->photoUrl('listing-images', $photo)) . '" width="96" height="96" alt="" loading="lazy">' : '<span class="icon-tile small">' . $ui->icon($glyph) . '</span>';
 };
 ?>
+<div class="metrics metrics-3">
+    <?= $ui->kpi('message', $session->unreadMessages, 'Unread chats', 'blue', '/messages') ?>
+    <?= $ui->kpi('bell', $session->unreadNotifications, 'Alerts', 'amber', '/notifications') ?>
+    <?= $ui->kpi($tabs[$tab][1], $shown . ($hasOlder ? '+' : ''), $tabs[$tab][0], 'teal', '/activity?tab=' . $tab) ?>
+</div>
 <nav class="tabs" aria-label="Activity sections">
     <?php foreach ($tabs as $key => [$label, $glyph]): ?><a class="<?= $tab === $key ? 'active' : '' ?>" <?= $tab === $key ? 'aria-current="page"' : '' ?> href="/activity?tab=<?= $e($key) ?>"><?= $ui->icon($glyph) ?><?= $e($label) ?></a><?php endforeach ?>
 </nav>

@@ -3,7 +3,7 @@ $person = $technician['profile'];
 $id = $technician['user_id'];
 $requestUrl = '/repair/request/' . $id;
 $cta = $isSelf ? $ui->link('/technician/profile', 'Edit profile', 'edit', 'button button-outline') : $ui->link($ui->session ? $requestUrl : '/login?next=' . rawurlencode($requestUrl), 'Request repair', 'wrench');
-echo $ui->heading('wrench', $person['display_name'], $technician['headline'] ?: 'Repair technician', $cta);
+echo $ui->heading('wrench', $person['display_name'], $technician['headline'] ?: 'Repair technician', $ui->link('/repair', 'Back', 'arrow-left', 'button button-outline') . $cta);
 $chips = static function (array $items) use ($e): string {
     return implode('', array_map(static fn (string $item): string => '<span class="tag">' . $e($item) . '</span>', $items));
 };

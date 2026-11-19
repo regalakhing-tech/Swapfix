@@ -104,11 +104,57 @@
       "640": "/assets/images/laptop-640.b4021c53a2.webp"
     }
   },
+  "product-earbuds": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/product-earbuds-400.6d3bc98237.webp",
+      "640": "/assets/images/product-earbuds-640.16ab3dffca.webp"
+    }
+  },
+  "product-charger": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/product-charger-400.c6d6463ed4.webp",
+      "640": "/assets/images/product-charger-640.f8642ea953.webp"
+    }
+  },
+  "product-battery": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/product-battery-400.55813abfa0.webp",
+      "640": "/assets/images/product-battery-640.3224478bd9.webp"
+    }
+  },
+  "product-logic-board": {
+    "width": 640,
+    "height": 480,
+    "sources": {
+      "400": "/assets/images/product-logic-board-400.83258cccdc.webp",
+      "640": "/assets/images/product-logic-board-640.54782df694.webp"
+    }
+  },
   "logo": {
     "width": 700,
     "height": 181,
     "sources": {
       "700": "/assets/images/swapfix-logo.17c8a654ae.png"
+    }
+  },
+  "favicon": {
+    "width": 64,
+    "height": 64,
+    "sources": {
+      "64": "/assets/images/favicon.ee8468fb21.png"
+    }
+  },
+  "apple-touch-icon": {
+    "width": 180,
+    "height": 180,
+    "sources": {
+      "180": "/assets/images/apple-touch-icon.39eb4ae478.png"
     }
   }
 }

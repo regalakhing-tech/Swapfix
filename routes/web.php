@@ -31,8 +31,8 @@ return static function (App $app, Container $container): void {
     $activity = new ActivityController($container);
     $uuid = '{id:[0-9a-fA-F-]{36}}';
 
-    // Illustrative landing page. It works before any service is connected.
-    $app->get('/', new HomeController());
+    // Landing page with the newest live records. It still renders before any service is connected.
+    $app->get('/', new HomeController($container));
 
     $app->group('', function (Group $live) use ($guards, $auth, $account, $listings, $exchanges, $offers, $technicians, $repairs, $messages, $notifications, $activity, $uuid): void {
         $live->get('/login', $auth->showLogin(...));

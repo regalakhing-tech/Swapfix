@@ -13,7 +13,7 @@ if ($isOwner && $live) {
 } elseif (!$isOwner && $live) {
     $actions = $ui->link('/login?next=' . rawurlencode('/market/' . $id . '?inquire=1'), 'Sign in to inquire', 'message');
 }
-echo $ui->heading(Labels::CATEGORY_ICONS[$listing['category']] ?? 'bag', $listing['title'], trim($listing['brand'] . ' ' . $listing['model']), $actions);
+echo $ui->heading(Labels::CATEGORY_ICONS[$listing['category']] ?? 'bag', $listing['title'], trim($listing['brand'] . ' ' . $listing['model']), $ui->link('/market', 'Back', 'arrow-left', 'button button-outline') . $actions);
 $photoSources = array_map(static fn (string $path): string => $ui->photoUrl('listing-images', $path), $listing['photo_paths']);
 $photoAlt = $listing['title'];
 $photoIcon = 'camera';

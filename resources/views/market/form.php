@@ -7,7 +7,7 @@ echo $ui->heading('bag', $editing ? 'Edit listing' : 'New listing', $editing ? $
 <form method="post" action="<?= $editing ? '/market/' . $e($listing['id']) : '/market' ?>" enctype="multipart/form-data" class="card form-card">
     <?= $ui->csrf() ?>
     <?= $ui->alert($error ?? null) ?>
-    <div class="form-grid">
+    <div class="form-grid form-grid-wide">
         <?= $ui->input('title', 'Title', $old['title'], ['required' => true, 'minlength' => 3, 'maxlength' => 150, 'data-wide' => true, 'placeholder' => 'iPhone 13 128GB, blue']) ?>
         <?= $ui->select('category', 'Category', Labels::CATEGORIES, $old['category'], ['required' => true]) ?>
         <?= $ui->select('condition', 'Condition', Labels::CONDITIONS, $old['condition'], ['required' => true]) ?>

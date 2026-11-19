@@ -1,21 +1,38 @@
 <?php
 declare(strict_types=1);
 
+use SwapFix\Support\Labels;
+
 $sections = [
-    'buy-sell' => ['Buy & Sell', 'bag', '/market', 'Shop secondhand gadgets', 'Compare prices, condition, and location.', 'Browse listings'],
-    'exchange' => ['Exchange', 'swap', '/exchange', 'Find your next trade', 'See which devices owners want in return.', 'Browse exchanges'],
-    'repair' => ['Repair', 'wrench', '/repair', 'Get a repair quote', 'Find a technician for your device and location.', 'Find a technician'],
+    'buy-sell' => ['Buy & Sell', 'bag', '/market', 'Shop secondhand gadgets', 'Compare price, condition, and location.', 'Browse listings'],
+    'exchange' => ['Exchange', 'swap', '/exchange', 'Find your next trade', 'See what owners want in return.', 'Browse exchanges'],
+    'repair' => ['Repair', 'wrench', '/repair', 'Get a repair quote', 'Find a technician near you.', 'Find a technician'],
 ];
-$categories = ['all' => ['All gadgets', 'grid'], 'phones' => ['Phones', 'phone'], 'laptops' => ['Laptops', 'laptop'], 'tablets' => ['Tablets', 'tablet'], 'accessories' => ['Accessories', 'headphones'], 'spare-parts' => ['Spare parts', 'chip']];
 [$sectionLabel, $sectionIcon, $sectionUrl, $sectionTitle, $sectionDescription, $sectionAction] = $sections[$view];
 $isRepair = $view === 'repair';
-$sampleLabel = $isRepair ? 'Sample services' : 'Sample listings';
+[$latestLabel, $searchLabel, $emptyLabel] = match ($view) {
+    'exchange' => ['Latest trades', 'Search trades', 'No trades posted yet.'],
+    'repair' => ['Technicians', 'Search technicians', 'No technicians listed yet.'],
+    default => ['Latest listings', 'Search listings', 'No gadgets listed yet.'],
+};
 $accountUrl = $signedIn ? '/activity' : '/register';
 $accountLabel = $signedIn ? 'My activity' : 'Create account';
+$guide = (require __DIR__ . '/../data/guides.php')[$view];
 $directoryScenes = [
     'buy-sell' => ['scene-market', 'Laptop, phone, and earbuds on a blue stand'],
     'exchange' => ['home-trade', 'Two devices with raised green exchange arrows'],
     'repair' => ['scene-repair', 'Opened phone and precision screwdriver on a copper stand'],
+];
+$directoryPerks = [
+    'buy-sell' => [['camera', 'Photos'], ['check-circle', 'Condition'], ['pin', 'Location']],
+    'exchange' => [['swap', 'Offers'], ['cash', 'Cash option'], ['message', 'Chat']],
+    'repair' => [['clipboard', 'Quotes'], ['activity', 'Tracking'], ['star', 'Reviews']],
+];
+$trustItems = [
+    ['shield', 'Verified email', 'Code check at sign-up'],
+    ['clipboard', 'Quote first', 'You approve every repair'],
+    ['message', 'Private chat', 'Only the two of you'],
+    ['star', 'Real reviews', 'After finished repairs'],
 ];
 ?>
 <!doctype html>
@@ -26,8 +43,10 @@ $directoryScenes = [
     <meta name="theme-color" content="#0b1930">
     <meta name="description" content="Browse secondhand gadgets, trade your old tech, and find repair technicians on SwapFix.">
     <title>SwapFix | Buy, swap, and repair gadgets</title>
+    <?php require __DIR__ . '/partials/head-icons.php' ?>
     <link rel="preload" href="<?= $escape($asset('/assets/fonts/sora-latin.woff2')) ?>" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="<?= $escape($asset('/assets/css/app.css')) ?>">
+    <?php if ($isRepair): ?><link rel="stylesheet" href="<?= $escape($asset('/assets/css/workspace.css')) ?>"><?php endif ?>
     <link rel="stylesheet" href="<?= $escape($asset('/assets/css/public-header.css')) ?>">
     <link rel="stylesheet" href="<?= $escape($asset('/assets/css/discover.css')) ?>">
     <script src="<?= $escape($asset('/assets/js/app.js')) ?>" defer></script>
@@ -39,9 +58,15 @@ $directoryScenes = [
     <section class="home-hero" aria-labelledby="hero-title">
         <div class="container home-hero-grid">
             <div class="home-hero-copy">
-                <p class="home-kicker">The gadget marketplace</p>
+                <p class="home-kicker"><?= $icon('leaf') ?>The gadget marketplace</p>
                 <h1 id="hero-title">Give good tech<br><span>a second life.</span></h1>
-                <p class="home-hero-description">Buy and sell secondhand gadgets, trade for an upgrade, or find someone to fix the device you already own.</p>
+                <p class="home-hero-description">Buy, sell, trade, or repair the devices you already love.</p>
+                <form class="home-search" action="/market" method="get" role="search">
+                    <label class="sr-only" for="home-search-input">Search gadgets</label>
+                    <?= $icon('search') ?>
+                    <input id="home-search-input" type="search" name="q" maxlength="100" placeholder="Search phones, laptops, tablets">
+                    <button class="button button-primary" type="submit">Search</button>
+                </form>
                 <div class="home-hero-actions">
                     <a class="button home-primary-action" href="/market">Browse gadgets <?= $icon('arrow-up-right') ?></a>
                     <a class="button home-secondary-action" href="/repair"><?= $icon('wrench') ?> Find a repair</a>
@@ -61,57 +86,75 @@ $directoryScenes = [
                         <?php [$sceneKey, $sceneLabel] = $directoryScenes[$key]; $sceneSizes = '(max-width: 720px) 112px, 240px'; require __DIR__ . '/partials/scene-art.php'; ?>
                     </span>
                     <span class="home-directory-copy">
-                        <span class="home-directory-name"><?= $icon($glyph) ?><strong><?= $escape($label) ?></strong><?= $icon('arrow-up-right', 'directory-arrow') ?></span>
+                        <span class="home-directory-name"><span class="discover-symbol"><?= $icon($glyph) ?></span><strong><?= $escape($label) ?></strong><?= $icon('arrow-up-right', 'directory-arrow') ?></span>
                         <small><?= $escape($description) ?></small>
+                        <span class="home-directory-perks">
+                            <?php foreach ($directoryPerks[$key] as [$perkIcon, $perkLabel]): ?><span><?= $icon($perkIcon) ?><?= $escape($perkLabel) ?></span><?php endforeach ?>
+                        </span>
                     </span>
                 </a>
             <?php endforeach ?>
         </div>
     </nav>
 
+    <section class="home-trust" aria-label="Why SwapFix">
+        <ul class="container home-trust-grid">
+            <?php foreach ($trustItems as [$glyph, $title, $text]): ?>
+                <li><span class="discover-symbol"><?= $icon($glyph) ?></span><span><strong><?= $escape($title) ?></strong><small><?= $escape($text) ?></small></span></li>
+            <?php endforeach ?>
+        </ul>
+    </section>
+
+    <section class="home-categories" aria-labelledby="categories-title">
+        <div class="container">
+            <header class="home-section-head">
+                <h2 id="categories-title">Shop by category</h2>
+                <a class="home-section-link" href="/market">View all <?= $icon('arrow') ?></a>
+            </header>
+            <div class="home-category-grid">
+                <?php foreach (Labels::CATEGORIES as $key => $label): ?>
+                    <a href="/market?category=<?= $escape($key) ?>"><span class="discover-symbol"><?= $icon(Labels::CATEGORY_ICONS[$key]) ?></span><strong><?= $escape($label) ?></strong></a>
+                <?php endforeach ?>
+            </div>
+        </div>
+    </section>
+
     <section class="home-showcase discover-<?= $escape($view) ?>" id="explore" aria-labelledby="catalog-title">
         <div class="container">
-            <nav class="showcase-tabs" aria-label="Marketplace preview">
+            <nav class="showcase-tabs" aria-label="Latest on SwapFix">
                 <?php foreach ($sections as $key => [$label, $glyph]): ?>
-                    <a href="<?= $escape($catalogUrl(['view' => $key, 'category' => 'all', 'q' => '', 'sort' => 'latest'])) ?>"<?= $view === $key ? ' aria-current="true"' : '' ?>><?= $icon($glyph) ?><?= $escape($label) ?></a>
+                    <a href="/?view=<?= $escape($key) ?>#explore"<?= $view === $key ? ' aria-current="true"' : '' ?>><?= $icon($glyph) ?><?= $escape($label) ?></a>
                 <?php endforeach ?>
             </nav>
             <header class="showcase-heading">
                 <div>
-                    <p class="showcase-label"><?= $sampleLabel ?></p>
+                    <p class="showcase-label"><?= $escape($latestLabel) ?></p>
                     <h2 id="catalog-title"><?= $escape($sectionTitle) ?></h2>
                     <p><?= $escape($sectionDescription) ?></p>
                 </div>
                 <a class="button button-outline" href="<?= $escape($sectionUrl) ?>"><?= $escape($sectionAction) ?> <?= $icon('arrow-up-right') ?></a>
             </header>
-            <form class="search-form showcase-search" action="/#explore" method="get" role="search">
-                <input type="hidden" name="view" value="<?= $escape($view) ?>">
-                <input type="hidden" name="category" value="<?= $escape($category) ?>">
-                <label class="search-field"><?= $icon('search') ?><span class="sr-only">Search <?= $isRepair ? 'sample services' : 'sample gadgets' ?></span><input type="search" name="q" value="<?= $escape($search) ?>" placeholder="<?= $isRepair ? 'Search sample services' : 'Search sample gadgets' ?>" maxlength="100"></label>
-                <?php if ($view !== 'exchange'): ?>
-                    <label class="sort-field"><span class="sr-only">Sort results</span>
-                        <select name="sort">
-                            <option value="latest" <?= $sort === 'latest' ? 'selected' : '' ?>>Featured first</option>
-                            <option value="price-low" <?= $sort === 'price-low' ? 'selected' : '' ?>>Price: low to high</option>
-                            <option value="price-high" <?= $sort === 'price-high' ? 'selected' : '' ?>>Price: high to low</option>
-                        </select>
-                    </label>
-                <?php endif ?>
+            <?php require __DIR__ . '/partials/guide-steps.php' ?>
+            <form class="search-form showcase-search" action="<?= $escape($sectionUrl) ?>" method="get" role="search">
+                <label class="search-field"><?= $icon('search') ?><span class="sr-only"><?= $escape($searchLabel) ?></span><input type="search" name="q" placeholder="<?= $escape($searchLabel) ?>" maxlength="100"></label>
                 <button class="button button-primary showcase-submit" type="submit"><?= $icon('search') ?>Search</button>
             </form>
-            <nav class="category-filters" aria-label="Gadget categories">
-                <?php foreach ($categories as $key => [$label, $glyph]): ?>
-                    <a class="category-chip <?= $category === $key ? 'active' : '' ?>" <?= $category === $key ? 'aria-current="true"' : '' ?> href="<?= $escape($catalogUrl(['category' => $key])) ?>"><?= $icon($glyph) ?><?= $escape($label) ?></a>
-                <?php endforeach ?>
-            </nav>
-            <?php if ($search !== '' || $category !== 'all'): ?>
-                <div class="results-heading"><p><?= count($items) ?> results<?= $search !== '' ? ' for “' . $escape($search) . '”' : '' ?></p><a href="<?= $escape($catalogUrl(['category' => 'all', 'q' => ''])) ?>">Clear filters <?= $icon('close') ?></a></div>
+            <?php if (!$isRepair): ?>
+                <nav class="category-filters" aria-label="Gadget categories">
+                    <?php foreach (Labels::CATEGORIES as $key => $label): ?>
+                        <a class="category-chip" href="<?= $escape($sectionUrl . '?category=' . $key) ?>"><?= $icon(Labels::CATEGORY_ICONS[$key]) ?><?= $escape($label) ?></a>
+                    <?php endforeach ?>
+                </nav>
             <?php endif ?>
-            <?php if ($items === []): ?>
-                <div class="empty-state"><span class="discover-symbol"><?= $icon('search') ?></span><h3>No matching samples</h3><p>Try another search or choose a different category.</p><a class="button button-outline" href="<?= $escape($catalogUrl(['category' => 'all', 'q' => ''])) ?>">Reset filters</a></div>
+            <?php if ($items === null || $items === []): ?>
+                <div class="empty-state"><span class="discover-symbol"><?= $icon($sectionIcon) ?></span><h3><?= $items === null ? 'Could not load the latest posts.' : $escape($emptyLabel) ?></h3><p><?= $items === null ? 'Please try again in a moment.' : 'Check back soon.' ?></p><a class="button button-outline" href="<?= $escape($sectionUrl) ?>"><?= $escape($sectionAction) ?></a></div>
+            <?php elseif ($isRepair): ?>
+                <div class="tech-grid showcase-results">
+                    <?php foreach ($items as $tech): require __DIR__ . '/partials/technician-card.php'; endforeach ?>
+                </div>
             <?php else: ?>
                 <div class="product-grid showcase-results">
-                    <?php foreach ($items as $item): require __DIR__ . '/partials/catalog-card.php'; endforeach ?>
+                    <?php foreach ($items as $item): require __DIR__ . '/partials/' . ($view === 'exchange' ? 'exchange' : 'listing') . '-card.php'; endforeach ?>
                 </div>
             <?php endif ?>
         </div>
@@ -119,17 +162,8 @@ $directoryScenes = [
 
     <?php require __DIR__ . '/partials/home-stories.php' ?>
 </main>
-<footer class="site-footer home-footer">
-    <div class="container footer-bottom">
-        <a class="brand" href="/" aria-label="SwapFix home"><img src="<?= $escape($logo['src']) ?>" alt="SwapFix" width="<?= $logo['width'] ?>" height="<?= $logo['height'] ?>" loading="lazy" decoding="async"></a>
-        <nav class="footer-links" aria-label="Footer navigation">
-            <?php foreach ($sections as [$label, , $url]): ?><a href="<?= $escape($url) ?>"><?= $escape($label) ?></a><?php endforeach ?>
-            <a href="#questions">FAQs</a>
-            <a href="<?= $accountUrl ?>"><?= $accountLabel ?></a>
-        </nav>
-        <p>&copy; <?= date('Y') ?> SwapFix</p>
-    </div>
-</footer>
+<?php require __DIR__ . '/partials/public-footer.php' ?>
+<a class="back-to-top" href="#main" aria-label="Back to top" hidden><?= $icon('arrow-up') ?></a>
 <dialog class="detail-dialog start-dialog" id="start-dialog" aria-labelledby="start-title" <?= isset($query['start']) ? 'open' : '' ?>>
     <a class="icon-button dialog-close" href="/#explore" data-close-dialog aria-label="Close getting started"><?= $icon('close') ?></a>
     <div class="start-content">

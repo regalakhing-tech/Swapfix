@@ -3,13 +3,22 @@ use SwapFix\Support\Labels;
 
 $total = (int) $results['total'];
 $ui->title = 'Exchange';
+$quickFilters = ['Condition' => array_map(
+    static fn (string $key): array => [Labels::CONDITIONS[$key], 'check-circle', ['condition' => $key], $filters['condition'] === $key],
+    ['new', 'like_new', 'good', 'fair'],
+)];
 ?>
 <section class="browse-page discover-exchange" aria-labelledby="exchange-title">
     <header class="browse-intro exchange-intro">
         <div class="browse-intro-copy">
             <p class="browse-section-name"><?= $ui->icon('swap') ?>Exchange</p>
             <h1 id="exchange-title">Trade the tech you have.</h1>
-            <p>Browse gadgets open to trade and see what each owner is looking for in return.</p>
+            <p>See what each owner wants in return.</p>
+            <ul class="browse-facts">
+                <li><?= $ui->icon('swap') ?><?= $total ?> open <?= $total === 1 ? 'trade' : 'trades' ?></li>
+                <li><?= $ui->icon('cash') ?>Cash optional</li>
+                <li><?= $ui->icon('clipboard') ?>Offer history</li>
+            </ul>
             <?= $ui->link('/exchange/new', 'Post an exchange', 'plus') ?>
         </div>
         <div class="browse-scene" aria-hidden="true">
@@ -30,29 +39,15 @@ $ui->title = 'Exchange';
     <button class="button button-primary" type="submit"><?= $ui->icon('search') ?>Search</button>
 </form>
 <?php require __DIR__ . '/../partials/filter-chips.php' ?>
+<?php require __DIR__ . '/../partials/quick-filters.php' ?>
 <p class="browse-count"><?= $total ?> <?= $total === 1 ? 'gadget' : 'gadgets' ?> open to trade</p>
 <?php if ($results['items'] === []): ?>
     <?= $ui->emptyState('swap', 'No exchanges match yet.', $ui->link('/exchange', 'Clear filters', 'close', 'button button-outline')) ?>
 <?php else: ?>
     <div class="product-grid live-grid exchange-results">
-        <?php foreach ($results['items'] as $item): $photo = $item['photo_paths'][0] ?? null; ?>
-            <article class="product-card">
-                <div class="product-photo <?= $photo ? '' : 'service-photo' ?>">
-                    <a href="/exchange/<?= $e($item['id']) ?>" aria-label="View <?= $e($item['title']) ?>">
-                        <?php if ($photo): ?><img src="<?= $e($ui->photoUrl('listing-images', $photo)) ?>" width="640" height="480" alt="<?= $e($item['title']) ?>" loading="lazy" decoding="async"><?php else: ?><span class="service-symbol"><?= $ui->icon('swap') ?></span><?php endif ?>
-                    </a>
-                    <span class="listing-badge teal"><?= $e(Labels::status($item['status'])) ?></span>
-                </div>
-                <div class="product-body">
-                    <p class="item-condition"><?= $ui->icon('check-circle') ?><?= $e(Labels::CONDITIONS[$item['condition']] ?? '') ?></p>
-                    <h3><a href="/exchange/<?= $e($item['id']) ?>"><?= $e($item['title']) ?></a></h3>
-                    <p class="product-specification"><?= $e(trim($item['brand'] . ' ' . $item['model'])) ?></p>
-                    <div class="exchange-wanted"><span><?= $ui->icon('swap') ?>Wanted in return</span><strong><?= $e($item['wanted_item']) ?></strong></div>
-                    <p class="item-location"><?= $ui->icon('pin') ?><?= $e($item['location']) ?></p>
-                </div>
-            </article>
-        <?php endforeach ?>
+        <?php foreach ($results['items'] as $item): require __DIR__ . '/../partials/exchange-card.php'; endforeach ?>
     </div>
     <?= $ui->pagination($total, $pageNumber, $pageSize) ?>
 <?php endif ?>
+<?php $guideKey = 'exchange'; $guideCta = ['Got a spare device?', 'Trade it for what you need.', '/exchange/new', 'Start a trade', 'swap']; require __DIR__ . '/../partials/section-guide.php' ?>
 </section>

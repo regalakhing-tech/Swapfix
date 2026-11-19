@@ -20,6 +20,7 @@ $authArt = $registration || $signIn ? Assets::image($registration ? 'hero-discov
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1046d1">
     <title><?= $e($ui->title . ' | SwapFix') ?></title>
+    <?php require __DIR__ . '/../partials/head-icons.php' ?>
     <link rel="preload" href="<?= $ui->asset('/assets/fonts/sora-latin.woff2') ?>" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="<?= $ui->asset('/assets/css/app.css') ?>">
     <link rel="stylesheet" href="<?= $ui->asset('/assets/css/workspace.css') ?>">
@@ -40,10 +41,18 @@ $authArt = $registration || $signIn ? Assets::image($registration ? 'hero-discov
             <div class="auth-visual-copy">
                 <?php if ($registration): ?>
                     <h2 id="auth-visual-title">Choose the right account</h2>
-                    <p>Both account types can use the marketplace. Choose Technician if you also offer repairs.</p>
+                    <ul class="auth-perks">
+                        <li><?= $ui->icon('bag') ?>Buy and sell</li>
+                        <li><?= $ui->icon('swap') ?>Trade gadgets</li>
+                        <li><?= $ui->icon('wrench') ?>Request or offer repairs</li>
+                    </ul>
                 <?php else: ?>
                     <h2 id="auth-visual-title">Pick up where you left off</h2>
-                    <p>Open My activity after signing in to see your listings, trade offers, and repairs.</p>
+                    <ul class="auth-perks">
+                        <li><?= $ui->icon('bag') ?>Your listings</li>
+                        <li><?= $ui->icon('swap') ?>Trade offers</li>
+                        <li><?= $ui->icon('clipboard') ?>Repair updates</li>
+                    </ul>
                 <?php endif ?>
             </div>
         </aside>

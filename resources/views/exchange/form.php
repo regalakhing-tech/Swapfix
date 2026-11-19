@@ -8,7 +8,7 @@ echo $ui->heading('swap', $editing ? 'Edit exchange' : 'New exchange', $editing 
     <?= $ui->csrf() ?>
     <?= $ui->alert($error ?? null) ?>
     <h2 class="section-title"><?= $ui->icon('phone') ?>Your gadget</h2>
-    <div class="form-grid">
+    <div class="form-grid form-grid-wide">
         <?= $ui->input('title', 'Title', $old['title'], ['required' => true, 'minlength' => 3, 'maxlength' => 150, 'data-wide' => true]) ?>
         <?= $ui->select('category', 'Category', Labels::CATEGORIES, $old['category'], ['required' => true]) ?>
         <?= $ui->select('condition', 'Condition', Labels::CONDITIONS, $old['condition'], ['required' => true]) ?>

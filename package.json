@@ -6,7 +6,8 @@
     "test:database": "node --test tests/database/*.test.mjs",
     "test:ui": "node tests/ui-behavior.mjs && node --test tests/workspace-behavior.test.mjs",
     "test:browser": "playwright test",
-    "assets": "node scripts/optimize-ui-assets.mjs"
+    "assets": "node scripts/optimize-ui-assets.mjs",
+    "test:live": "node tests/live-smoke.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",

@@ -7,6 +7,14 @@
 
 The final website uses resized, content-hashed WebP hero variants and an optimized transparent PNG logo. PNG preserves the logo's clean alpha edges. Image dimensions and responsive sources live in `resources/data/images.json`.
 
+## Generated Product Photos
+
+Codex CLI 0.163.0 (`gpt-6.1-sol`, `xhigh` reasoning, built-in image generation) created the sample earbuds, charger, battery and logic board photos in `originals/swapfix-product-*.png`. They contain no text or brand marks. The homepage no longer uses them since it shows live listings. They stay in the asset manifest for future design work.
+
+## Browser Tab Icons
+
+`scripts/optimize-ui-assets.mjs` cuts the phone-and-wrench mark from `swapfix-logo-transparent.png` and places it on a white tile, so it stays visible on dark browser tabs. It writes a 64 px favicon and a 180 px Apple touch icon.
+
 ## User-Supplied Catalog Photos
 
 Copied from `C:\Users\janna\Downloads\RussDtech-main\RussDtech-main\images`:

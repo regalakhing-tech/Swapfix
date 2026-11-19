@@ -3,13 +3,27 @@ $total = (int) $results['total'];
 $session = $ui->session;
 $ui->title = 'Repair';
 $specialties = ['Screen replacement' => 'phone', 'Battery replacement' => 'battery', 'Charging port repair' => 'plug', 'Software troubleshooting' => 'settings'];
+$quickFilters = ['Brand' => array_map(
+    static fn (string $brand): array => [$brand, 'phone', ['brand' => $brand], $filters['brand'] === $brand],
+    ['Apple', 'Samsung', 'Xiaomi', 'Oppo', 'Vivo'],
+)];
+$guideCta = match (true) {
+    $session === null => ['Are you a technician?', 'Offer your repair services.', '/register?type=technician', 'Join as technician', 'wrench'],
+    $session->isTechnician() => ['Keep your services current', 'Update prices and specialties.', '/technician/services', 'Manage services', 'settings'],
+    default => null,
+};
 ?>
 <section class="browse-page discover-repair" aria-labelledby="repair-directory-title">
     <header class="browse-intro repair-intro">
         <div class="browse-intro-copy">
             <p class="browse-section-name"><?= $ui->icon('wrench') ?>Repair</p>
             <h1 id="repair-directory-title">Find a technician.</h1>
-            <p>Choose a specialty or search by area. Review the technician’s quote before work starts.</p>
+            <p>Pick a specialty or area. Approve the quote before work starts.</p>
+            <ul class="browse-facts">
+                <li><?= $ui->icon('wrench') ?><?= $total ?> <?= $total === 1 ? 'technician' : 'technicians' ?></li>
+                <li><?= $ui->icon('clipboard') ?>Quote first</li>
+                <li><?= $ui->icon('star') ?>Real reviews</li>
+            </ul>
             <?= $session ? $ui->link('/repairs', 'My repairs', 'clipboard', 'button button-outline') : $ui->link('/login?next=%2Frepairs', 'Track a repair', 'clipboard', 'button button-outline') ?>
         </div>
         <div class="browse-scene" aria-hidden="true">
@@ -24,6 +38,7 @@ $specialties = ['Screen replacement' => 'phone', 'Battery replacement' => 'batte
             </a>
         <?php endforeach ?>
     </nav>
+<?php require __DIR__ . '/../partials/quick-filters.php' ?>
 <form class="filter-bar card" method="get" action="/repair" role="search">
     <label class="search-field filter-search"><?= $ui->icon('search') ?><span class="sr-only">Search technicians</span><input type="search" name="q" value="<?= $e($filters['q']) ?>" maxlength="100" placeholder="Name or specialty"></label>
     <div class="form-grid filter-grid filter-inline">
@@ -38,17 +53,9 @@ $specialties = ['Screen replacement' => 'phone', 'Battery replacement' => 'batte
     <?= $ui->emptyState('wrench', 'No technicians match yet.', $ui->link('/repair', 'Clear filters', 'close', 'button button-outline')) ?>
 <?php else: ?>
     <div class="tech-grid">
-        <?php foreach ($results['items'] as $tech): ?>
-            <a class="card tech-card" href="/technicians/<?= $e($tech['id']) ?>">
-                <div class="tech-card-top"><?= $ui->avatar($tech, 'avatar-large') ?><div><h2><?= $e($tech['display_name']) ?></h2><?php if ($tech['headline'] !== ''): ?><p><?= $e($tech['headline']) ?></p><?php endif ?>
-                    <span class="rating-line"><?= $ui->stars($tech['rating_average']) ?><small><?= $tech['rating_count'] > 0 ? $e(number_format((float) $tech['rating_average'], 1)) . ' (' . (int) $tech['rating_count'] . ')' : 'No reviews yet' ?></small></span></div></div>
-                <div class="tag-row"><?php foreach (array_slice($tech['specialties'], 0, 4) as $specialty): ?><span class="tag"><?= $e($specialty) ?></span><?php endforeach ?></div>
-                <p class="item-location"><?= $ui->icon('pin') ?><?= $e($tech['service_area'] ?: $tech['location']) ?></p>
-                <p class="item-location"><?= $ui->icon('clock') ?><?= $e($tech['available_hours']) ?></p>
-                <?php if ($tech['starting_price'] !== null): ?><strong class="from-price">From <?= $ui->money($tech['starting_price']) ?></strong><?php endif ?>
-            </a>
-        <?php endforeach ?>
+        <?php foreach ($results['items'] as $tech): require __DIR__ . '/../partials/technician-card.php'; endforeach ?>
     </div>
     <?= $ui->pagination($total, $pageNumber, $pageSize) ?>
 <?php endif ?>
+<?php $guideKey = 'repair'; require __DIR__ . '/../partials/section-guide.php' ?>
 </section>
