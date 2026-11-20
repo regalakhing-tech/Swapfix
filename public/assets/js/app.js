@@ -136,13 +136,14 @@
     const opened = 'dialog[open],details[open]';
     const inUse = form => form.contains(document.activeElement) || [...form.elements].some(dirty);
     // Never touch what the person is using: focus, a form they started, an open dialog or menu and its contents.
-    const busy = node => {
+    // Inside an open dialog or menu, or a started form: nothing in it changes at all.
+    const frozen = node => {
       const element = node.nodeType === 1 ? node : node.parentElement;
       const form = element.closest('form');
-      if (element.closest(opened) !== null || (form !== null && inUse(form))) return true;
-      return node.nodeType === 1 && (element.contains(document.activeElement) || element.querySelector(opened) !== null
-        || [...element.querySelectorAll('form')].some(inUse));
+      return element.closest(opened) !== null || (form !== null && inUse(form));
     };
+    const busy = node => frozen(node) || (node.nodeType === 1 && (node.contains(document.activeElement)
+      || node.querySelector(opened) !== null || [...node.querySelectorAll('form')].some(inUse)));
     const stable = value => value?.includes('/object/sign/') ? value.split('?')[0] : value;
     const sync = (live,next) => {
       live.getAttributeNames().forEach(name => { if (!next.hasAttribute(name)) live.removeAttribute(name); });
@@ -161,7 +162,7 @@
     };
     const key = node => node.nodeType === 1 ? `${node.nodeName}#${node.id}.${node.getAttribute('class') || ''}` : `#${node.nodeType}`;
     const patch = (live,next) => {
-      if (live.isEqualNode(next)) return;
+      if (live.isEqualNode(next) || frozen(live)) return;
       const free = !busy(live);
       const resized = live.childNodes.length !== next.childNodes.length;
       if (live.nodeType !== 1 || live.nodeName !== next.nodeName || (free && resized)) { if (free) swap(live,next); return; }
@@ -176,9 +177,11 @@
       let at = 0;
       for (const fresh of [...next.childNodes]) {
         const rest = [...live.childNodes].slice(at);
-        const match = rest.findIndex(child => key(child) === key(fresh));
+        // Never look past a node in use, or matching a later twin would skip it and add it twice.
+        const end = rest.findIndex(busy);
+        const match = rest.slice(0,end === -1 ? rest.length : end + 1).findIndex(child => key(child) === key(fresh));
         if (match === -1) { live.insertBefore(fresh,rest[0] ?? null); bind(fresh); at++; continue; }
-        rest.slice(0,match).forEach(stale => { if (busy(stale)) at++; else stale.remove(); });
+        rest.slice(0,match).forEach(stale => stale.remove());
         patch(rest[match],fresh); at++;
       }
       [...live.childNodes].slice(at).forEach(stale => { if (!busy(stale)) stale.remove(); });

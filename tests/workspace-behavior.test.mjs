@@ -48,7 +48,7 @@ test('background refresh brings in new messages and counts without touching a st
   dom.window.close();
 });
 test('background refresh updates around untouched forms but leaves open dialogs alone',async () => {
-  const view = (status,title) => `<body class="portal" data-refresh><main id="main"><section class="repair"><p class="status">${status}</p><form method="post" action="/repairs/1/cancel"><input type="hidden" name="csrf" value="t"><button>Cancel</button></form></section><dialog id="quote" open><h2>${title}</h2></dialog></main></body>`;
+  const view = (status,title) => `<body class="portal" data-refresh><main id="main"><section class="repair"><p class="status">${status}</p><form method="post" action="/repairs/1/cancel"><input type="hidden" name="csrf" value="t"><button>Cancel</button></form></section><dialog id="quote" open><h2>${title}</h2><ul class="lines">${title === 'Quote' ? '<li>Screen</li>' : '\n<li>Screen</li>\n'}</ul></dialog></main></body>`;
   const dom = refreshing(view('Requested','Quote'),view('Quoted','New quote').replace('</p>','</p><p class="note">Quotation ready</p>'));
   const document = dom.window.document;
   const heading = document.querySelector('dialog h2'); heading.dataset.sentinel = 'kept';
@@ -57,18 +57,28 @@ test('background refresh updates around untouched forms but leaves open dialogs 
   assert.equal(document.querySelector('.note')?.textContent,'Quotation ready');
   assert.equal(document.querySelector('dialog h2'),heading); assert.equal(heading.textContent,'Quote');
   assert.equal(heading.dataset.sentinel,'kept','Nothing inside an open dialog changes.');
+  assert.equal(document.querySelector('dialog .lines').childNodes.length,1,'Nothing is added inside an open dialog.');
   dom.window.close();
 });
 test('a new action appears beside a reply that is still being typed',async () => {
-  const view = actions => `<body class="portal" data-refresh><main id="main"><section class="panel"><p class="status">${actions ? 'Quoted' : 'Requested'}</p>${actions}<form method="post" action="/messages/1" class="composer"><textarea name="body"></textarea><button>Send</button></form></section></main></body>`;
+  const view = actions => `<body class="portal" data-refresh><main id="main"><section class="panel">\n<p class="status">${actions ? 'Quoted' : 'Requested'}</p>\n${actions}${actions ? '\n' : ''}<form method="post" action="/messages/1" class="composer"><textarea name="body"></textarea><button>Send</button></form>\n</section></main></body>`;
   const dom = refreshing(view(''),view('<form method="post" action="/repairs/1/quotations/2" class="decide"><button>Approve</button></form>'));
   const document = dom.window.document;
   const draft = document.querySelector('textarea'); draft.value = 'Half a reply'; draft.focus();
   await tick(dom);
   assert.ok(document.querySelector('form.decide'),'The new action must appear even though the panel holds a started reply.');
+  assert.equal(document.querySelectorAll('form.composer').length,1,'The started reply is kept once, not added again.');
   assert.equal(document.querySelector('.status').textContent,'Quoted');
   assert.equal(document.querySelector('textarea'),draft); assert.equal(draft.value,'Half a reply');
   assert.equal(document.activeElement,draft);
+});
+test('a changed status word and a new badge both update in the same refresh',async () => {
+  const view = (status,count) => `<body class="portal" data-refresh><main id="main"><p class="status">${status}</p></main><nav class="tabbar"><a href="/messages">Chat${count}</a></nav></body>`;
+  const dom = refreshing(view('Requested',''),view('Quoted','<b class="count">1</b>'));
+  await tick(dom);
+  assert.equal(dom.window.document.querySelector('.status').textContent,'Quoted');
+  assert.equal(dom.window.document.querySelector('.tabbar .count')?.textContent,'1');
+  dom.window.close();
 });
 test('background refresh stops after a form submits and never runs on pages without the marker',async () => {
   const body = '<body class="portal" data-refresh><main id="main"><form method="post"><button>Save</button></form></main></body>';
