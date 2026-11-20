@@ -4,14 +4,54 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 const script = await readFile(new URL('../public/assets/js/app.js',import.meta.url),'utf8');
-function page(body) {
+function page(body,setup) {
   const dom = new JSDOM(body,{url:'https://swapfix.example.test/repairs/123',runScripts:'outside-only'});
   dom.window.matchMedia = () => ({matches:true});
   dom.window.HTMLDialogElement.prototype.showModal = function () { this.open = true; };
   dom.window.HTMLDialogElement.prototype.close = function () { this.open = false; this.dispatchEvent(new dom.window.Event('close')); };
+  setup?.(dom.window);
   dom.window.eval(script);
   return dom;
 }
+// A visible page whose background fetch returns `next`.
+function refreshing(body,next) {
+  return page(body,window => {
+    Object.defineProperty(window.document,'hidden',{value:false,configurable:true});
+    window.fetches = 0;
+    window.fetch = async () => { window.fetches++; return {ok:true,redirected:false,headers:{get:() => 'text/html; charset=utf-8'},text:async () => next}; };
+  });
+}
+async function tick(dom) {
+  dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));
+  await new Promise(resolve => setTimeout(resolve,20));
+}
+const photo = token => `<img src="https://db.example.test/storage/v1/object/sign/offer-images/a.jpg?token=${token}" alt="Phone" width="80" height="80">`;
+const chat = (bubbles,count,token,actions) => `<body class="portal" data-refresh><nav class="tabbar"><a href="/messages">Chat${count}</a></nav><main id="main">${photo(token)}<div class="thread">${bubbles}</div><form method="post" action="/messages/1" class="composer"><input type="hidden" name="csrf" value="t"><textarea name="body"></textarea><button>Send</button></form><div class="actions">${actions}</div></main></body>`;
+test('background refresh brings in new messages and counts without touching a started reply',async () => {
+  const one = '<div class="bubble"><p>Hi</p></div>';
+  const dom = refreshing(chat(one,'','a',''),chat(one + '<div class="bubble"><p>Still available?</p></div>','<b class="count">1</b>','b','<form method="post" action="/x" data-confirm="Sure?"><button>Go</button></form>'));
+  const document = dom.window.document;
+  const draft = document.querySelector('textarea'); draft.value = 'Half a reply';
+  await tick(dom);
+  assert.equal(document.querySelectorAll('.thread .bubble').length,2);
+  assert.equal(document.querySelector('.tabbar .count').textContent,'1');
+  assert.equal(document.querySelector('textarea'),draft); assert.equal(draft.value,'Half a reply');
+  assert.match(document.querySelector('main img').getAttribute('src'),/token=a$/,'A re-signed photo URL must not reload the image.');
+  const submit = new dom.window.Event('submit',{bubbles:true,cancelable:true});
+  document.querySelector('form[data-confirm]').dispatchEvent(submit);
+  assert.equal(submit.defaultPrevented,true,'Swapped-in forms keep their confirmation behavior.');
+  dom.window.close();
+});
+test('background refresh stops after a form submits and never runs on pages without the marker',async () => {
+  const body = '<body class="portal" data-refresh><main id="main"><form method="post"><button>Save</button></form></main></body>';
+  const dom = refreshing(body,body);
+  dom.window.document.querySelector('form').dispatchEvent(new dom.window.Event('submit',{bubbles:true,cancelable:true}));
+  await tick(dom);
+  assert.equal(dom.window.fetches,0); dom.window.close();
+  const plain = refreshing('<body class="portal"><main id="main">Saved form with errors</main></body>','');
+  await tick(plain);
+  assert.equal(plain.window.fetches,0); plain.window.close();
+});
 test('password visibility exposes an accurate label and pressed state',() => {
   const dom = page('<div><input type="password"><button data-password-toggle></button></div>');
   const button = dom.window.document.querySelector('button'); button.click();

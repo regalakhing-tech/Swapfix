@@ -21,38 +21,101 @@
     close.addEventListener('click',remove);
   }
 
-  const dialogs = [...document.querySelectorAll('dialog')];
-  function closeDialog(dialog) { dialog.close(); }
-  dialogs.forEach(dialog => {
-    if (typeof dialog.showModal !== 'function') return;
-    dialog.querySelectorAll('[data-close-dialog]').forEach(link => link.addEventListener('click',event => {
-      event.preventDefault(); closeDialog(dialog);
-    }));
-    dialog.addEventListener('click',event => {
-      if (event.target !== dialog) return;
-      const bounds = dialog.getBoundingClientRect();
-      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) closeDialog(dialog);
+  // Per-element behavior. Runs once on the page and again on any part the background refresh swaps in.
+  function bind(root) {
+    if (root.nodeType !== 1) return;
+    const all = selector => [...(root.matches(selector) ? [root] : []),...root.querySelectorAll(selector)];
+    all('dialog').forEach(dialog => {
+      if (typeof dialog.showModal !== 'function') return;
+      dialog.querySelectorAll('[data-close-dialog]').forEach(link => link.addEventListener('click',event => {
+        event.preventDefault(); dialog.close();
+      }));
+      dialog.addEventListener('click',event => {
+        if (event.target !== dialog) return;
+        const bounds = dialog.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+      });
+      dialog.addEventListener('close',() => {
+        const url = new URL(location.href);
+        if (dialog.dataset.urlParam) {
+          url.searchParams.delete(dialog.dataset.urlParam); history.replaceState(null,'',url);
+        } else if (url.searchParams.has('item') || url.searchParams.has('start')) {
+          url.searchParams.delete('item'); url.searchParams.delete('start'); history.replaceState(null,'',url);
+        }
+      });
+      if (dialog.open) { dialog.removeAttribute('open'); dialog.showModal(); }
     });
-    dialog.addEventListener('close',() => {
-      const url = new URL(location.href);
+    all('[data-open-dialog]').forEach(link => link.addEventListener('click',event => {
+      const dialog = document.getElementById(link.dataset.openDialog);
+      if (!dialog || typeof dialog.showModal !== 'function') return;
+      event.preventDefault();
+      document.querySelectorAll('dialog[open]').forEach(other => other.close());
+      dialog.showModal();
       if (dialog.dataset.urlParam) {
-        url.searchParams.delete(dialog.dataset.urlParam); history.replaceState(null,'',url);
-      } else if (url.searchParams.has('item') || url.searchParams.has('start')) {
-        url.searchParams.delete('item'); url.searchParams.delete('start'); history.replaceState(null,'',url);
+        const url = new URL(location.href); url.searchParams.set(dialog.dataset.urlParam,'1'); history.replaceState(null,'',url);
       }
+    }));
+    all('[data-password-toggle]').forEach(button => button.addEventListener('click',() => {
+      const input = button.parentElement.querySelector('input');
+      const showing = input.type === 'password';
+      input.type = showing ? 'text' : 'password';
+      button.setAttribute('aria-label',showing ? 'Hide password' : 'Show password');
+      button.setAttribute('aria-pressed',String(showing));
+    }));
+    all('[data-photo-input]').forEach(input => {
+      let urls = [];
+      input.addEventListener('change',() => {
+        urls.forEach(url => URL.revokeObjectURL(url)); urls = [];
+        const preview = input.closest('.field')?.querySelector('[data-photo-preview]');
+        if (!preview) return;
+        preview.replaceChildren();
+        [...input.files].forEach(file => {
+          if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 4194304) {
+            const error = document.createElement('span'); error.className = 'upload-name';
+            error.textContent = `${file.name}: choose JPEG, PNG or WebP up to 4 MiB total.`; preview.append(error); return;
+          }
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(file); urls.push(img.src);
+          img.alt = file.name; img.width = 80; img.height = 80; preview.append(img);
+        });
+      });
     });
-    if (dialog.open) { dialog.removeAttribute('open'); dialog.showModal(); }
-  });
-  document.querySelectorAll('[data-open-dialog]').forEach(link => link.addEventListener('click',event => {
-    const dialog = document.getElementById(link.dataset.openDialog);
-    if (!dialog || typeof dialog.showModal !== 'function') return;
-    event.preventDefault();
-    dialogs.forEach(other => { if (other.open) other.close(); });
-    dialog.showModal();
-    if (dialog.dataset.urlParam) {
-      const url = new URL(location.href); url.searchParams.set(dialog.dataset.urlParam,'1'); history.replaceState(null,'',url);
-    }
-  }));
+
+    all('form[enctype="multipart/form-data"]').forEach(form => form.addEventListener('submit',event => {
+      const files = [...form.querySelectorAll('input[type="file"]')].flatMap(input => [...input.files]);
+      if (files.reduce((sum,file) => sum + file.size,0) > 4194304) {
+        event.preventDefault(); toast('Photos must total 4 MiB or less. Choose smaller images.',true);
+        form.querySelector('input[type="file"]')?.focus();
+      }
+    }));
+
+    // Confirmation uses a native, styled dialog. Without dialog support, the
+    // server action remains available through its ordinary HTML form.
+    all('form[data-confirm]').forEach(form => {
+      let approved = false;
+      form.addEventListener('submit',event => {
+        if (approved) return;
+        const dialog = document.createElement('dialog');
+        if (typeof dialog.showModal !== 'function') return;
+        event.preventDefault();
+        dialog.className = 'detail-dialog form-dialog confirmation-dialog';
+        dialog.setAttribute('aria-labelledby','confirmation-title');
+        const body = document.createElement('div'); body.className = 'dialog-body';
+        const title = document.createElement('h2'); title.id = 'confirmation-title'; title.textContent = form.dataset.confirmTitle || 'Continue?';
+        const message = document.createElement('p'); message.className = 'confirm-message'; message.textContent = form.dataset.confirm;
+        const actions = document.createElement('div'); actions.className = 'confirm-actions';
+        const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'button button-outline'; cancel.textContent = 'Go back';
+        const confirm = document.createElement('button'); confirm.type = 'button'; confirm.className = 'button button-primary'; confirm.textContent = form.dataset.confirmAction || 'Continue';
+        cancel.addEventListener('click',() => dialog.close());
+        confirm.addEventListener('click',() => { approved = true; dialog.close(); form.requestSubmit(event.submitter || undefined); });
+        dialog.addEventListener('close',() => dialog.remove());
+        actions.append(cancel,confirm); body.append(title,message,actions); dialog.append(body); document.body.append(dialog); dialog.showModal();
+        cancel.focus();
+      });
+    });
+    all('.thread').forEach(thread => { thread.scrollTop = thread.scrollHeight; });
+  }
+  bind(document.body);
 
   document.querySelectorAll('[data-toast]').forEach(box => {
     let timer;
@@ -60,65 +123,70 @@
     box.querySelector('[data-toast-close]')?.addEventListener('click',remove);
     timer = setTimeout(remove,Number(box.dataset.toast) === 6000 ? 6000 : 2000);
   });
-  document.querySelectorAll('[data-password-toggle]').forEach(button => button.addEventListener('click',() => {
-    const input = button.parentElement.querySelector('input');
-    const showing = input.type === 'password';
-    input.type = showing ? 'text' : 'password';
-    button.setAttribute('aria-label',showing ? 'Hide password' : 'Show password');
-    button.setAttribute('aria-pressed',String(showing));
-  }));
-  document.querySelectorAll('[data-photo-input]').forEach(input => {
-    let urls = [];
-    input.addEventListener('change',() => {
-      urls.forEach(url => URL.revokeObjectURL(url)); urls = [];
-      const preview = input.closest('.field')?.querySelector('[data-photo-preview]');
-      if (!preview) return;
-      preview.replaceChildren();
-      [...input.files].forEach(file => {
-        if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size > 4194304) {
-          const error = document.createElement('span'); error.className = 'upload-name';
-          error.textContent = `${file.name}: choose JPEG, PNG or WebP up to 4 MiB total.`; preview.append(error); return;
-        }
-        const img = document.createElement('img');
-        img.src = URL.createObjectURL(file); urls.push(img.src);
-        img.alt = file.name; img.width = 80; img.height = 80; preview.append(img);
+
+  // Signed-in GET pages re-fetch themselves every 3 seconds and swap in only what changed, so both
+  // sides of a chat, trade or repair see updates without reloading. It shows nothing on screen.
+  if (document.body.hasAttribute('data-refresh')) {
+    const dirty = field => field.type === 'file' ? field.files.length > 0
+      : field.type === 'checkbox' || field.type === 'radio' ? field.checked !== field.defaultChecked
+      : field.tagName !== 'SELECT' ? field.value !== field.defaultValue
+      : field.multiple ? [...field.options].some(option => option.selected !== option.defaultSelected)
+      : field.selectedIndex !== Math.max(0,[...field.options].findIndex(option => option.defaultSelected));
+    const held = element => element.matches('dialog[open],details[open]')
+      || element.matches('form') && (element.contains(document.activeElement) || [...element.elements].some(dirty));
+    // Never replace what the person is using: focus, a form they started, an open dialog or menu.
+    const busy = node => {
+      const element = node.nodeType === 1 ? node : node.parentElement;
+      const form = element.closest('form');
+      return element.contains(document.activeElement) || (form !== null && held(form))
+        || [element,...element.querySelectorAll('form,dialog[open],details[open]')].some(held);
+    };
+    const stable = value => value?.includes('/object/sign/') ? value.split('?')[0] : value;
+    const sync = (live,next) => {
+      live.getAttributeNames().forEach(name => { if (!next.hasAttribute(name)) live.removeAttribute(name); });
+      next.getAttributeNames().forEach(name => {
+        const value = next.getAttribute(name);
+        // Signed photo URLs change on every request; keep the image that already loaded.
+        if (name === 'src' && stable(value) === stable(live.getAttribute(name))) return;
+        if (live.getAttribute(name) !== value) live.setAttribute(name,value);
       });
-    });
-  });
+    };
+    const patch = (live,next) => {
+      if (live.isEqualNode(next)) return;
+      if (live.nodeType === 1 && live.nodeName === next.nodeName && live.childNodes.length === next.childNodes.length) {
+        if (!busy(live)) sync(live,next);
+        const kids = [...next.childNodes];
+        [...live.childNodes].forEach((child,index) => patch(child,kids[index]));
+      } else if (!busy(live)) {
+        const readingOlder = live.classList?.contains('thread') && live.scrollHeight - live.scrollTop - live.clientHeight > 40;
+        const top = live.scrollTop;
+        live.replaceWith(next); bind(next);
+        if (readingOlder) next.scrollTop = top;
+      }
+    };
+    const regions = ['#main','.sidebar-nav','.tabbar','.topbar .has-count'];
+    let stopped = false, running = false;
+    const refresh = async () => {
+      if (stopped || running || document.hidden) return;
+      running = true;
+      try {
+        const response = await fetch(location.href,{cache:'no-store',credentials:'same-origin'});
+        if (!response.ok || response.redirected || !response.headers.get('content-type')?.includes('text/html')) return;
+        const fresh = new DOMParser().parseFromString(await response.text(),'text/html');
+        if (stopped || !fresh.body.hasAttribute('data-refresh')) return;
+        regions.forEach(selector => {
+          const live = document.querySelector(selector), next = fresh.querySelector(selector);
+          if (live && next) patch(live,next);
+        });
+      } catch { /* Offline or mid-deploy: the next tick tries again. */ } finally { running = false; }
+    };
+    setInterval(refresh,3000);
+    document.addEventListener('visibilitychange',refresh);
+    // A submitted form owns the next page and its one-time messages, so stop fetching.
+    document.addEventListener('submit',event => { if (!event.defaultPrevented) stopped = true; });
+    window.addEventListener('pageshow',event => { if (event.persisted) { stopped = false; refresh(); } });
+  }
 
-  document.querySelectorAll('form[enctype="multipart/form-data"]').forEach(form => form.addEventListener('submit',event => {
-    const files = [...form.querySelectorAll('input[type="file"]')].flatMap(input => [...input.files]);
-    if (files.reduce((sum,file) => sum + file.size,0) > 4194304) {
-      event.preventDefault(); toast('Photos must total 4 MiB or less. Choose smaller images.',true);
-      form.querySelector('input[type="file"]')?.focus();
-    }
-  }));
-
-  // Confirmation uses a native, styled dialog. Without dialog support, the
-  // server action remains available through its ordinary HTML form.
-  document.querySelectorAll('form[data-confirm]').forEach(form => {
-    let approved = false;
-    form.addEventListener('submit',event => {
-      if (approved) return;
-      const dialog = document.createElement('dialog');
-      if (typeof dialog.showModal !== 'function') return;
-      event.preventDefault();
-      dialog.className = 'detail-dialog form-dialog confirmation-dialog';
-      dialog.setAttribute('aria-labelledby','confirmation-title');
-      const body = document.createElement('div'); body.className = 'dialog-body';
-      const title = document.createElement('h2'); title.id = 'confirmation-title'; title.textContent = form.dataset.confirmTitle || 'Continue?';
-      const message = document.createElement('p'); message.className = 'confirm-message'; message.textContent = form.dataset.confirm;
-      const actions = document.createElement('div'); actions.className = 'confirm-actions';
-      const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'button button-outline'; cancel.textContent = 'Go back';
-      const confirm = document.createElement('button'); confirm.type = 'button'; confirm.className = 'button button-primary'; confirm.textContent = form.dataset.confirmAction || 'Continue';
-      cancel.addEventListener('click',() => dialog.close());
-      confirm.addEventListener('click',() => { approved = true; dialog.close(); form.requestSubmit(event.submitter || undefined); });
-      dialog.addEventListener('close',() => dialog.remove());
-      actions.append(cancel,confirm); body.append(title,message,actions); dialog.append(body); document.body.append(dialog); dialog.showModal();
-      cancel.focus();
-    });
-  });
-  document.querySelectorAll('.thread').forEach(thread => { thread.scrollTop = thread.scrollHeight; });
   const menus = '.mobile-menu[open],.avatar-menu[open]';
   document.addEventListener('click',event => document.querySelectorAll(menus).forEach(menu => { if (!menu.contains(event.target)) menu.removeAttribute('open'); }));
   document.addEventListener('keydown',event => { if (event.key === 'Escape') document.querySelectorAll(menus).forEach(menu => menu.removeAttribute('open')); });

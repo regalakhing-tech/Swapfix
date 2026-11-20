@@ -95,6 +95,7 @@ These results show the application logic and database rules pass locally, every 
 | Conversations | Participants only, unread counts, mark as read | `schema.test.mjs`: messaging and notifications | Pass |
 | Unread badges | Clear on opening a thread, stay when an action is rejected | `CommunicationHttpTest` (4 tests) | Pass |
 | Notifications | Older pages, mark all read, recipient only | `CommunicationHttpTest` (2 tests), `schema.test.mjs` | Pass |
+| Background refresh | Signed-in GET pages re-fetch every 3 seconds while visible and swap in new messages, counts and status without any on-screen control; a started form, focus, open dialog and loaded photos stay; POST-rendered pages and submitted forms stop it | `tests/workspace-behavior.test.mjs` (2 tests), `CommunicationHttpTest` | Pass |
 | Email queue | Opted-in recipients only, worker role only | `schema.test.mjs`: messaging and notifications | Pass |
 | Email building | Message prepared without sending, unsafe SMTP settings rejected | `MailTest` (3 tests) | Pass |
 

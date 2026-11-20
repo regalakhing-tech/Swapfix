@@ -26,7 +26,7 @@ $logoTag = '<img src="' . $e($logo['src']) . '" alt="SwapFix" width="' . (int) $
     <?php if ($discover): ?><link rel="stylesheet" href="<?= $ui->asset('/assets/css/discover.css') ?>"><?php endif ?>
     <script src="<?= $ui->asset('/assets/js/app.js') ?>" defer></script>
 </head>
-<body class="<?= $session ? 'portal' : 'public-page' ?>">
+<body class="<?= $session ? 'portal' : 'public-page' ?>"<?= $ui->refreshes() ? ' data-refresh' : '' ?>>
 <a class="skip-link" href="#main">Skip to content</a>
 <?php if ($session): ?>
 <aside class="sidebar" aria-label="Main navigation">

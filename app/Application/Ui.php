@@ -120,6 +120,12 @@ final class Ui
         return $this->path . ($query === [] ? '' : '?' . http_build_query($query));
     }
 
+    /** Signed-in GET pages re-fetch themselves quietly; a page rendered by a POST must keep its form. */
+    public function refreshes(): bool
+    {
+        return $this->session !== null && $this->request->getMethod() === 'GET';
+    }
+
     public function active(string $prefix): bool
     {
         return $this->path === $prefix || str_starts_with($this->path, rtrim($prefix, '/') . '/');

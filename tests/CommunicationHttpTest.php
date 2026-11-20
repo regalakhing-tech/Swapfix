@@ -30,6 +30,7 @@ final class CommunicationHttpTest extends TestCase
         $html = (string) $response->getBody();
         self::assertStringContainsString('>2 unread<', $html);
         self::assertStringContainsString('action="/notifications/read-all"', $html);
+        self::assertStringContainsString('<body class="portal" data-refresh>', $html);
     }
 
     public function testOlderNotificationsAreAvailableOnTheNextPage(): void
@@ -139,6 +140,8 @@ final class CommunicationHttpTest extends TestCase
         self::assertStringContainsString('Cash amount must be a valid amount', (string) $response->getBody());
         self::assertStringContainsString('See you on Friday.', (string) $response->getBody());
         self::assertStringContainsString('class="count">3<', (string) $response->getBody());
+        // A page rendered by a POST holds the rejected form, so it must not refresh itself.
+        self::assertStringNotContainsString('data-refresh', (string) $response->getBody());
     }
 
     private function request(string $path, array $queue, ?array $form = null): ResponseInterface
