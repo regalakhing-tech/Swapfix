@@ -1,6 +1,6 @@
 // DOM behavior tests only. No browser automation or visual-layout assertions.
 import { readFile } from 'node:fs/promises';
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { JSDOM } from 'jsdom';
 const script = await readFile(new URL('../public/assets/js/app.js',import.meta.url),'utf8');
@@ -14,12 +14,17 @@ function page(body,setup) {
   return dom;
 }
 // A visible page whose background fetch returns `next`.
+// Close every refreshing page even when an assertion fails, so its 3-second timer cannot keep Node running.
+const refreshingPages = [];
+after(() => refreshingPages.forEach(dom => dom.window.close()));
 function refreshing(body,next) {
-  return page(body,window => {
+  const dom = page(body,window => {
     Object.defineProperty(window.document,'hidden',{value:false,configurable:true});
     window.fetches = 0;
     window.fetch = async () => { window.fetches++; return {ok:true,redirected:false,headers:{get:() => 'text/html; charset=utf-8'},text:async () => next}; };
   });
+  refreshingPages.push(dom);
+  return dom;
 }
 async function tick(dom) {
   dom.window.document.dispatchEvent(new dom.window.Event('visibilitychange'));
@@ -41,6 +46,29 @@ test('background refresh brings in new messages and counts without touching a st
   document.querySelector('form[data-confirm]').dispatchEvent(submit);
   assert.equal(submit.defaultPrevented,true,'Swapped-in forms keep their confirmation behavior.');
   dom.window.close();
+});
+test('background refresh updates around untouched forms but leaves open dialogs alone',async () => {
+  const view = (status,title) => `<body class="portal" data-refresh><main id="main"><section class="repair"><p class="status">${status}</p><form method="post" action="/repairs/1/cancel"><input type="hidden" name="csrf" value="t"><button>Cancel</button></form></section><dialog id="quote" open><h2>${title}</h2></dialog></main></body>`;
+  const dom = refreshing(view('Requested','Quote'),view('Quoted','New quote').replace('</p>','</p><p class="note">Quotation ready</p>'));
+  const document = dom.window.document;
+  const heading = document.querySelector('dialog h2'); heading.dataset.sentinel = 'kept';
+  await tick(dom);
+  assert.equal(document.querySelector('.status').textContent,'Quoted','A clean form with a button must not block updates around it.');
+  assert.equal(document.querySelector('.note')?.textContent,'Quotation ready');
+  assert.equal(document.querySelector('dialog h2'),heading); assert.equal(heading.textContent,'Quote');
+  assert.equal(heading.dataset.sentinel,'kept','Nothing inside an open dialog changes.');
+  dom.window.close();
+});
+test('a new action appears beside a reply that is still being typed',async () => {
+  const view = actions => `<body class="portal" data-refresh><main id="main"><section class="panel"><p class="status">${actions ? 'Quoted' : 'Requested'}</p>${actions}<form method="post" action="/messages/1" class="composer"><textarea name="body"></textarea><button>Send</button></form></section></main></body>`;
+  const dom = refreshing(view(''),view('<form method="post" action="/repairs/1/quotations/2" class="decide"><button>Approve</button></form>'));
+  const document = dom.window.document;
+  const draft = document.querySelector('textarea'); draft.value = 'Half a reply'; draft.focus();
+  await tick(dom);
+  assert.ok(document.querySelector('form.decide'),'The new action must appear even though the panel holds a started reply.');
+  assert.equal(document.querySelector('.status').textContent,'Quoted');
+  assert.equal(document.querySelector('textarea'),draft); assert.equal(draft.value,'Half a reply');
+  assert.equal(document.activeElement,draft);
 });
 test('background refresh stops after a form submits and never runs on pages without the marker',async () => {
   const body = '<body class="portal" data-refresh><main id="main"><form method="post"><button>Save</button></form></main></body>';

@@ -127,19 +127,21 @@
   // Signed-in GET pages re-fetch themselves every 3 seconds and swap in only what changed, so both
   // sides of a chat, trade or repair see updates without reloading. It shows nothing on screen.
   if (document.body.hasAttribute('data-refresh')) {
+    // Buttons and fieldsets have no default value, so they never count as edited.
     const dirty = field => field.type === 'file' ? field.files.length > 0
       : field.type === 'checkbox' || field.type === 'radio' ? field.checked !== field.defaultChecked
-      : field.tagName !== 'SELECT' ? field.value !== field.defaultValue
+      : field.tagName !== 'SELECT' ? 'defaultValue' in field && field.value !== field.defaultValue
       : field.multiple ? [...field.options].some(option => option.selected !== option.defaultSelected)
       : field.selectedIndex !== Math.max(0,[...field.options].findIndex(option => option.defaultSelected));
-    const held = element => element.matches('dialog[open],details[open]')
-      || element.matches('form') && (element.contains(document.activeElement) || [...element.elements].some(dirty));
-    // Never replace what the person is using: focus, a form they started, an open dialog or menu.
+    const opened = 'dialog[open],details[open]';
+    const inUse = form => form.contains(document.activeElement) || [...form.elements].some(dirty);
+    // Never touch what the person is using: focus, a form they started, an open dialog or menu and its contents.
     const busy = node => {
       const element = node.nodeType === 1 ? node : node.parentElement;
       const form = element.closest('form');
-      return element.contains(document.activeElement) || (form !== null && held(form))
-        || [element,...element.querySelectorAll('form,dialog[open],details[open]')].some(held);
+      if (element.closest(opened) !== null || (form !== null && inUse(form))) return true;
+      return node.nodeType === 1 && (element.contains(document.activeElement) || element.querySelector(opened) !== null
+        || [...element.querySelectorAll('form')].some(inUse));
     };
     const stable = value => value?.includes('/object/sign/') ? value.split('?')[0] : value;
     const sync = (live,next) => {
@@ -151,18 +153,35 @@
         if (live.getAttribute(name) !== value) live.setAttribute(name,value);
       });
     };
+    const swap = (live,next) => {
+      const readingOlder = live.classList?.contains('thread') && live.scrollHeight - live.scrollTop - live.clientHeight > 40;
+      const top = live.scrollTop;
+      live.replaceWith(next); bind(next);
+      if (readingOlder) next.scrollTop = top;
+    };
+    const key = node => node.nodeType === 1 ? `${node.nodeName}#${node.id}.${node.getAttribute('class') || ''}` : `#${node.nodeType}`;
     const patch = (live,next) => {
       if (live.isEqualNode(next)) return;
-      if (live.nodeType === 1 && live.nodeName === next.nodeName && live.childNodes.length === next.childNodes.length) {
-        if (!busy(live)) sync(live,next);
-        const kids = [...next.childNodes];
-        [...live.childNodes].forEach((child,index) => patch(child,kids[index]));
-      } else if (!busy(live)) {
-        const readingOlder = live.classList?.contains('thread') && live.scrollHeight - live.scrollTop - live.clientHeight > 40;
-        const top = live.scrollTop;
-        live.replaceWith(next); bind(next);
-        if (readingOlder) next.scrollTop = top;
+      const free = !busy(live);
+      const resized = live.childNodes.length !== next.childNodes.length;
+      if (live.nodeType !== 1 || live.nodeName !== next.nodeName || (free && resized)) { if (free) swap(live,next); return; }
+      if (free) sync(live,next);
+      if (resized) return merge(live,next);
+      const kids = [...next.childNodes];
+      [...live.childNodes].forEach((child,index) => patch(child,kids[index]));
+    };
+    // A parent that holds something in use but gained or lost children: keep what is in use,
+    // add the new children and drop stale ones, so a new action still appears beside a started reply.
+    const merge = (live,next) => {
+      let at = 0;
+      for (const fresh of [...next.childNodes]) {
+        const rest = [...live.childNodes].slice(at);
+        const match = rest.findIndex(child => key(child) === key(fresh));
+        if (match === -1) { live.insertBefore(fresh,rest[0] ?? null); bind(fresh); at++; continue; }
+        rest.slice(0,match).forEach(stale => { if (busy(stale)) at++; else stale.remove(); });
+        patch(rest[match],fresh); at++;
       }
+      [...live.childNodes].slice(at).forEach(stale => { if (!busy(stale)) stale.remove(); });
     };
     const regions = ['#main','.sidebar-nav','.tabbar','.topbar .has-count'];
     let stopped = false, running = false;
